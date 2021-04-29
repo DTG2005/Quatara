@@ -19,6 +19,7 @@ class YeetBot (commands.Bot):
         )
 
         self.load_extension("Misc")
+        self.load_extension("Moderation")
         
         async def on_ready(self):
             print("YEEEEEEEEEEEEEEEET")

@@ -36,7 +36,6 @@ class Misc(commands.Cog):
         totalPages = len(c)
 
         message = await ctx.send(embed= updateEmbed(currentPage, c, totalPages))
-        await ctx.send("Knock knock")
 
         #Here we control the page configuration by adding emotes for reaction that can be detected by bot to change the page.
         await message.add_reaction("◀️")
@@ -47,27 +46,22 @@ class Misc(commands.Cog):
             return user == ctx.author and str(reaction.emoji) in ["◀️", "▶️"]
 
         while True:
-            try:
-                #We wait for a reaction from the user
-                reaction, user = await bot.wait_for("reaction_add", timeout=3000, check=check)
+            #We wait for a reaction from the user
+            reaction, user = await self.bot.wait_for("reaction_add", timeout=3000, check=check)
 
-                #Check if the emoji is the forward one and current page is not the last, we go onto the next page
-                if str(reaction.emoji) == "▶️" and cur_page != pages:
-                    currentPage += 1
-                    await message.edit(embed= updateEmbed(currentPage, c, totalPages))
-                    await message.remove_reaction(reaction, user)
-
-                #Check if the emoji is the backward one and current page is not the first, we go onto the previous page
-                elif str(reaction.emoji) == "◀️" and cur_page > 1:
-                    currentPage -= 1
-                    await message.edit(embed= updateEmbed(currentPage, c, totalPages))
-                    await message.remove_reaction(reaction, user)
-
-                #Otherwise
-                else:
-                    await message.remove_reaction(reaction, user)
-            except asyncio.TimeoutError():
-                await ctx.send("Reaction time is up. Send a fresh command Please!")
+            #Check if the emoji is the forward one and current page is not the last, we go onto the next page
+            if str(reaction.emoji) == "▶️" and currentPage != totalPages:
+                currentPage += 1
+                await message.edit(embed= updateEmbed(currentPage, c, totalPages))
+                await message.remove_reaction(reaction, user)
+            #Check if the emoji is the backward one and current page is not the first, we go onto the previous page
+            elif str(reaction.emoji) == "◀️" and currentPage > 1:
+                currentPage -= 1
+                await message.edit(embed= updateEmbed(currentPage, c, totalPages))
+                await message.remove_reaction(reaction, user)
+            #Otherwise
+            else:
+                await message.remove_reaction(reaction, user)
 
 def setup(bot):
     bot.remove_command("help")
