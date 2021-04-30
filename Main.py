@@ -27,6 +27,8 @@ class YeetBot (commands.Bot):
         self.load_extension("Utility")
 
         self.log_channel = self.get_channel(837631613390028800)
+        self.version = "v1.0.0"
+        self.author = 305403872438910977
         self.door_channel = self.get_channel(831066790238879764)
 
 
