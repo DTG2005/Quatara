@@ -6,18 +6,20 @@ class Moderation(commands.Cog):
         self.bot = bot
 
     #This is the kick command, pretty self explanatory imo
-    @commands.command(description = "Well, uh, kicks da hoe. Supa basic command all mods should know right?", aliases = ["yeet"])
+    @commands.command(description = "Kicks members, supa simple lil command all of ya folks should know right?", aliases = ["yeet"])
     @commands.has_permissions(kick_members = True)
-    async def kick(self, ctx, member : discord.Member, *, reason = "No reason provided."):
+    async def kick(self, ctx, member: discord.Member, *, reason = "No reason provided"):
         await member.kick(reason= reason)
-        await ctx.send("The pestilence has been Yeeted. All hail YEET GOD.")
-        await member.send(f"Hey punk, by the grace of the Yeet GOD, you have been kicked for {reason}.")
+        await ctx.send(f"{member.name} has been kicked for {reason}. All hail Da YEETs!!!")
+        await member.send(f"Thou hast been kicked, pestilence, for {reason}.")
 
     #If the user doesn't have the permission, we display this message
     @kick.error
     async def kickerror(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("Hey mods! We have an imposter tryna kick someone without thy permissions. Do with him as thou wisheth.")
+        else:
+            print(error)
 
     #Repeat the same thing for ban command
     @commands.command(description = "Bans pesky motherlovers from the server once and for all for greater good of the server.", aliases = ["superyeet"])
@@ -33,7 +35,7 @@ class Moderation(commands.Cog):
             await ctx.send("Hey mods! We have an imposter tryna ban someone without thy permissions. Do with him as thou wisheth.")
 
     #repeat the same thing for clean command as well so yep
-    @commands.command(description = "Clears the given set of commands so you don't have to dirty your hands.", aliases = ["clean", "tidy"])
+    @commands.command(description = "Clears the given set of commands so you don't have to dirty your hands.", aliases = ["clean", "tidy", "purge"])
     @commands.has_permissions(manage_messages = True)
     async def clear(self, ctx, amt):
         await ctx.channel.purge(limit = int(amt) + 1)
@@ -41,7 +43,8 @@ class Moderation(commands.Cog):
     @clear.error
     async def clearError(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
-            await ctx.send("Sorry but it seems you do not have the permissions to use this command.")
+            await ctx.send("Sorry but it seems you do not have the permissions to use this command. Thanks with the goodwill for cleannup though! :thumbsup:.")
+        
 
 def setup(bot):
     bot.add_cog(Moderation(bot))
