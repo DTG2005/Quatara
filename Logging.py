@@ -9,20 +9,22 @@ class Logging(commands.Cog):
     #logging for messages being deleted
     @commands.Cog.listener()
     async def on_message_delete(self, message):
-        embed = discord.Embed(title = f"{message.author.name} deleted a message, heads up!!!", description = "", color = discord.Color(0x350cf9))
-        embed.add_field(name= message.content, value= f"Logged in <#{self.bot.log_channel.id}>")
-        embed.set_author(name= message.author.name, icon_url=message.author.avatar_url)
-        await self.bot.log_channel.send(embed=embed)
+        if message.channel not in self.bot.log_ignores:
+            embed = discord.Embed(title = f"{message.author.name} deleted a message, heads up!!!", description = "", color = discord.Color(0x350cf9))
+            embed.add_field(name= message.content, value= f"Logged in <#{self.bot.log_channel.id}>")
+            embed.set_author(name= message.author.name, icon_url=message.author.avatar_url)
+            await self.bot.log_channel.send(embed=embed)
 
     #logging for messages being edited
     @commands.Cog.listener()
     async def on_message_edit(self, messageOrig, messageEdit):
-        embed = discord.Embed(title = f"{messageOrig.author.name} edited a message, heads up!!!", description = "", color = discord.Color(0x350cf9))
-        embed.add_field(name= messageOrig.content, value= "The message before the edit.")
-        embed.add_field(name= messageEdit.content, value= "The message after being edited.")
-        embed.set_author(name= messageOrig.author.name, icon_url=messageOrig.author.avatar_url)
-        channel = self.bot.log_channel
-        await channel.send(embed = embed)
+        if messageOrig.channel not in self.bot.log_ignores:
+            embed = discord.Embed(title = f"{messageOrig.author.name} edited a message, heads up!!!", description = "", color = discord.Color(0x350cf9))
+            embed.add_field(name= messageOrig.content, value= "The message before the edit.")
+            embed.add_field(name= messageEdit.content, value= "The message after being edited.")
+            embed.set_author(name= messageOrig.author.name, icon_url=messageOrig.author.avatar_url)
+            channel = self.bot.log_channel
+            await channel.send(embed = embed)
 
     #logging for member joining
     @commands.Cog.listener()
@@ -49,6 +51,21 @@ class Logging(commands.Cog):
     async def setdoor(self, ctx, channel : discord.TextChannel):
         self.bot.door_channel = channel
         await ctx.send("Door channel updated!!!")
+
+    #here we add channels we want to ignore for logging (e.g. Spam, Pokemon, etc.)
+    @commands.command(description = "Sets channels that you want the logging to ignore.")
+    async def ignorelogs(self, ctx, channel : discord.TextChannel):
+        self.bot.log_ignores.append(channel)
+        await ctx.send("New channels to ignore message logs added!!!")
+
+    #And another one to remove a channel you accidentally added to the log ignores.
+    @commands.command(description = "Removes channels you don't want in log ignores. After all, silly humans make mistakes unlike us bots.")
+    async def rmlogignore(self, ctx, channel : discord.TextChannel):
+        try:
+            self.bot.log_ignores.remove(channel)
+            await ctx.send("Channel removed from log ignores!!!")
+        except ValueError:
+            await ctx.send("Channel not in log ignores!!! Look for mistakes, puny human.")
 
 
 def setup(bot):

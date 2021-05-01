@@ -15,7 +15,7 @@ intents.members = True
 class YeetBot (commands.Bot):
     def __init__(self):
         super().__init__(
-            command_prefix = "y!",
+            command_prefix = "y-",
             intents = intents,
             case_insensitive = True,
             self_bot = False,
@@ -30,6 +30,7 @@ class YeetBot (commands.Bot):
         self.version = "v1.0.0"
         self.author = 305403872438910977
         self.door_channel = self.get_channel(831066790238879764)
+        self.log_ignores = []
 
 
 if __name__ == "__main__":
