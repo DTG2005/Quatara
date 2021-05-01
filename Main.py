@@ -31,6 +31,9 @@ class YeetBot (commands.Bot):
         self.author = 305403872438910977
         self.door_channel = self.get_channel(831066790238879764)
         self.log_ignores = []
+        self.warns = {}
+        self.superwarns = {}
+        self.spam_channels = []
 
 
 if __name__ == "__main__":
