@@ -10,7 +10,7 @@ class Logging(commands.Cog):
     @commands.Cog.listener()
     async def on_message_delete(self, message):
         if message.channel not in self.bot.log_ignores:
-            embed = discord.Embed(title = f"{message.author.name} deleted a message, heads up!!!", description = "", color = discord.Color(0x350cf9))
+            embed = discord.Embed(title = f"{message.author.name} deleted a message, heads up!!!", description = "", color = discord.Color.red())
             embed.add_field(name= message.content, value= f"Logged in <#{self.bot.log_channel.id}>")
             embed.set_author(name= message.author.name, icon_url=message.author.avatar_url)
             await self.bot.log_channel.send(embed=embed)
@@ -19,7 +19,7 @@ class Logging(commands.Cog):
     @commands.Cog.listener()
     async def on_message_edit(self, messageOrig, messageEdit):
         if messageOrig.channel not in self.bot.log_ignores:
-            embed = discord.Embed(title = f"{messageOrig.author.name} edited a message, heads up!!!", description = "", color = discord.Color(0x350cf9))
+            embed = discord.Embed(title = f"{messageOrig.author.name} edited a message, heads up!!!", description = "", color = discord.Color.orange())
             embed.add_field(name= messageOrig.content, value= "The message before the edit.")
             embed.add_field(name= messageEdit.content, value= "The message after being edited.")
             embed.set_author(name= messageOrig.author.name, icon_url=messageOrig.author.avatar_url)
@@ -29,14 +29,14 @@ class Logging(commands.Cog):
     #logging for member joining
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        embed = discord.Embed(title = "Member joined!!!!", description = member.name,color = discord.Color(0x350cf9))
+        embed = discord.Embed(title = "Member joined!!!!", description = member.name,color = discord.Color.green())
         embed.set_author(name= member.name, icon_url=member.avatar_url)
         await self.bot.door_channel.send(embed = embed)
 
     #logging for member leaving
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        embed = discord.Embed(title = "Member left!!!!", description = member.name,color = discord.Color(0x350cf9))
+        embed = discord.Embed(title = "Member left!!!!", description = member.name,color = discord.Color.red())
         embed.set_author(name= member.name, icon_url=member.avatar_url)
         await self.bot.door_channel.send(embed = embed)
 
