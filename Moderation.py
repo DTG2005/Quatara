@@ -1,9 +1,16 @@
 import discord
 from discord.ext import commands
+from discord.ext import tasks
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+        #Here, I loop the task of cleaning the spam file every 20 seconds
+        @tasks.loop(seconds = 20)
+        async def clean_spam(seconds = 20):
+            with open("spam_detect.txt", "r+") as file:
+                file.truncate(0)
 
     #This listener detects spam in the channels except those marked for spam
     @commands.Cog.listener()
@@ -12,10 +19,11 @@ class Moderation(commands.Cog):
             counter = 0
             with open ("spam_detect.txt", "r+") as file:
                 for lines in file:
-                    if lines.strip("\n") == str(message.author.id) + str(message.channel.id):
+                    if lines.strip("\n") == str(message.author.id) + str(message.channel.id) + message.content:
                         counter += 1
 
-                file.writelines(f"{str(message.author.id) + str(message.channel.id)}\n")
+                #If messages sent by the user and the channel + the content of the message is the same for 5 times, we ping the mods
+                file.writelines(f"{str(message.author.id) + str(message.channel.id) + message.content}\n")
                 if counter > 5:
                     file.truncate(0)
                     await message.channel.send("You are spamming. Proceeding to ping <@305403872438910977>, <@698218252119179365> and <@384331120755474442> to take action.")
