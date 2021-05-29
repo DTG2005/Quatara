@@ -23,6 +23,7 @@ class Utility(commands.Cog):
     #Loads the JSON file to add a new prefix into the JSON before dumping it to store the new prefix data.
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
+        prefixes = {};
         with open("prefixes.json", "r") as f:
             prefixes = json.load(f)
 
@@ -30,6 +31,15 @@ class Utility(commands.Cog):
 
         with open("prefixes.json", "w") as f:
             json.dump(prefixes, f)
+
+        
+        config = {};
+        with open("server_configs.json", "r") as f:
+            config = json.load(f)
+            config[str(guild.id)] = {"log":None, "door": None}
+
+        with open("server_configs.json", "w") as f:
+            json.dump(config, f)
 
     @commands.Cog.listener()
     async def on_message(self, message):
