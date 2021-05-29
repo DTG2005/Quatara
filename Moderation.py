@@ -71,8 +71,8 @@ class Moderation(commands.Cog):
     @commands.command(description = "Voids the pestilence into your void! After all, there's no sound in space.", aliases = ["void"])
     @commands.has_permissions(kick_members = True)
     async def mute(self, ctx, user : discord.Member, *, reason= "No reason provided."):
-        role = discord.utils.get(member.guild, name='noobmaster69')
-        voider = discord.utils.get(member.guild, name='voider')
+        role = discord.utils.get(user.guild, name='noobmaster69')
+        voider = discord.utils.get(user.guild, name='voider')
         await user.remove_roles(role, reason= reason)
         await user.add_roles(voider, reason= reason)
         await ctx.send(f"{user.name} has been muted for {reason}!!! All hail Da YEET GOD!!!")
@@ -89,8 +89,8 @@ class Moderation(commands.Cog):
         if self.bot.warns:
             if user in self.bot.warns:
                 if self.bot.warns[user] == 4:
-                    role = discord.utils.get(member.guild, name='noobmaster69')
-                    voider = discord.utils.get(member.guild, name='voider')
+                    role = discord.utils.get(user.guild, name='noobmaster69')
+                    voider = discord.utils.get(user.guild, name='voider')
                     await user.remove_roles(role, reason= reason)
                     await user.add_roles(voider, reason= reason)
                     await ctx.send(f"{user.name} has been muted over accumulation of 3 warnings. The current reason for warning was {reason}!!! All hail Da YEET GOD!!!")
@@ -99,6 +99,10 @@ class Moderation(commands.Cog):
             else:
                 self.bot.warns[user] = 1
                 await ctx.send(f"{user.name} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = {3 - self.bot.warns[user]}.")
+        else:
+            self.bot.warns[user] = 1
+            await ctx.send(f"{user.name} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = {3 - self.bot.warns[user]}.")
+
 
     @warn.error
     async def warnError(self, ctx, error):
