@@ -32,7 +32,7 @@ class Utility(commands.Cog):
             json.dump(prefixes, f)
 
     @commands.Cog.listener()
-    async def on_message(message):
+    async def on_message(self, message):
         try:
             if message.mentions[0] == self.bot.user:
                 with open("prefixes.json", "r") as f:
@@ -55,7 +55,7 @@ class Utility(commands.Cog):
     @commands.command(description = "Changes the prefix incase muscle memory makes you miss the right keys.")
     @commands.has_permissions(administrator = True)
     async def changeprefix(self, ctx, prefix):
-        with open("prefixes.json", "w") as f:
+        with open("prefixes.json", "r") as f:
             prefixes = json.load(f)
 
         prefixes[str(ctx.guild.id)] = prefix
