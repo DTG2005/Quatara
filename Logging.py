@@ -1,5 +1,18 @@
 import discord
+import json
 from discord.ext import commands
+
+def getLog(id):
+    with open("server_configs.json", "r") as f:
+        dict = json.load(f)
+        returnId = dict[str(id)]["log"]
+        return returnId
+
+def getDoor(id):
+    with open("server_configs.json", "r") as f:
+        dict = json.load(f)
+        returnId = dict[str(id)]["door"]
+        return returnId
 
 
 class Logging(commands.Cog):
@@ -10,10 +23,11 @@ class Logging(commands.Cog):
     @commands.Cog.listener()
     async def on_message_delete(self, message):
         if message.channel not in self.bot.log_ignores:
+            log_channel = self.bot.get_channel(getLog(message.guild.id))
             embed = discord.Embed(title = f"{message.author.name} deleted a message, heads up!!!", description = "", color = discord.Color.red())
-            embed.add_field(name= message.content, value= f"Logged in <#{self.bot.log_channel.id}>")
+            embed.add_field(name= message.content, value= f"Logged in <#{log_channel.id}>")
             embed.set_author(name= message.author.name, icon_url=message.author.avatar_url)
-            await self.bot.log_channel.send(embed=embed)
+            await log_channel.send(embed=embed)
 
     #logging for messages being edited
     @commands.Cog.listener()
@@ -23,7 +37,7 @@ class Logging(commands.Cog):
             embed.add_field(name= messageOrig.content, value= "The message before the edit.")
             embed.add_field(name= messageEdit.content, value= "The message after being edited.")
             embed.set_author(name= messageOrig.author.name, icon_url=messageOrig.author.avatar_url)
-            channel = self.bot.log_channel
+            channel = self.bot.get_channel(getDoor(messageOrig.guild.id))
             await channel.send(embed = embed)
 
     #logging for member joining
@@ -43,13 +57,29 @@ class Logging(commands.Cog):
     #A command for setting the logging channel to be a different one
     @commands.command(description = "Changes the log channel to be a different one for a more QOL channel to be set separately.")
     async def setlog(self, ctx, channel: discord.TextChannel):
-        self.bot.log_channel = channel
+        
+        config = {}
+        with open("server_configs.json", "r") as f:
+            config = json.load(f)
+        config[str(ctx.guild.id)]["log"] = channel.id
+
+        with open("server_configs.json", "w") as f:
+            json.dump(config, f)
+
         await ctx.send("Log channel updated!!!")
 
     #A command for setting the door channel (The channel where the entries and exits are logged) to be a different one
     @commands.command(description = "Sets the door channel to be a different one, where the member entries and exits are logged.")
     async def setdoor(self, ctx, channel : discord.TextChannel):
-        self.bot.door_channel = channel
+
+        config = {}
+        with open("server_configs.json", "r") as f:
+            config = json.load(f)
+        config[str(ctx.guild.id)]["door"] = channel.id
+
+        with open("server_configs.json", "w") as f:
+            json.dump(config, f)
+
         await ctx.send("Door channel updated!!!")
 
     #here we add channels we want to ignore for logging (e.g. Spam, Pokemon, etc.)
