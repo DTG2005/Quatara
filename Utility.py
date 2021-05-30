@@ -36,7 +36,7 @@ class Utility(commands.Cog):
         config = {};
         with open("server_configs.json", "r") as f:
             config = json.load(f)
-            config[str(guild.id)] = {"log":None, "door": None}
+            config[str(guild.id)] = {"log":None, "door": None, "Spam Ignore": []}
 
         with open("server_configs.json", "w") as f:
             json.dump(config, f)
