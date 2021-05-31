@@ -168,14 +168,22 @@ class Moderation(commands.Cog):
     @commands.command(description = "Adds spam channels where spamming is allowed.")
     @commands.has_permissions(administrator = True)
     async def addspam(self, ctx, channel : discord.TextChannel):
-        if channel in self.bot.spam_channels:
+        spam_channels = []
+        with open("server_configs.json", "r") as f:
+            data = json.load(f)
+            spam_channels =data[str(ctx.guild.id)]["Spam Ignore"]
+        if channel in spam_channels:
             await ctx.send("This channel already exists in our spam list.")
         else:
             data = {}
-            with open("server_configs.json", "w") as f:
+            with open("server_configs.json", "r") as f:
                 data = json.load(f)
 
             data[str(ctx.guild.id)]["Spam Ignore"].append(channel.id)
+            with open("server_configs.json", "w") as f:
+                json.dump(data, f)
+            
+            await ctx.send(f"Spam channel has been added to our list. We shall ping the moderators on spams in {channel.name} from now on.")
 
     @addspam.error
     async def addspamError(self, ctx, error):
@@ -186,13 +194,23 @@ class Moderation(commands.Cog):
     @commands.command(description = "Removes a channel from spam channels where spamming is allowed.")
     @commands.has_permissions(administrator = True)
     async def rmspam(self, ctx, channel : discord.TextChannel):
-        if channel in self.bot.spam_channels:
-            self.bot.spam_channels.remove(channel)
+        spam_channels =  []
+        with open("server_configs.json", "r") as f:
+            data = json.load(f)
+            spam_channels = data[str(ctx.guild.id)]["Spam Ignore"]
+        await ctx.send(spam_channels)
+        if channel.id in spam_channels:
+            data = {}
+            with open("server_configs.json", "r") as f:
+                data = json.load(f)
+            data[str(ctx.guild.id)]["Spam Ignore"].remove(channel.id)
+            with open("server_configs.json", "w") as f:
+                json.dump(data, f)
             await ctx.send("Spam channel removed!!!")
         else:
             await ctx.send("The channel isn't in the list of channels where spamming is allowed. Look again, maybe?")
 
-    @addspam.error
+    @rmspam.error
     async def rmspamError(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not decide which channels I detect spam in! Begone thot!")
@@ -210,6 +228,11 @@ class Moderation(commands.Cog):
         with open("server_configs.json", "w") as f:
             json.dump(data, f)
         await ctx.send(f"Spam detection has been set to {truth} on your server.")
+    
+    @togglespam.error
+    async def tserror(self, ctx, error):
+      if isinstance(error, commands.MissingPermissions):
+        await ctx.send("You do not have the authorisation to decide to toggle the spam for this server! Next time, consult your superiors.")
 
 def setup(bot):
     bot.add_cog(Moderation(bot))
