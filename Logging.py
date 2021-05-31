@@ -37,22 +37,24 @@ class Logging(commands.Cog):
             embed.add_field(name= messageOrig.content, value= "The message before the edit.")
             embed.add_field(name= messageEdit.content, value= "The message after being edited.")
             embed.set_author(name= messageOrig.author.name, icon_url=messageOrig.author.avatar_url)
-            channel = self.bot.get_channel(getDoor(messageOrig.guild.id))
+            channel = self.bot.get_channel(getLog(messageOrig.guild.id))
             await channel.send(embed = embed)
 
     #logging for member joining
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        embed = discord.Embed(title = "Member joined!!!!", description = member.name,color = discord.Color.green())
-        embed.set_author(name= member.name, icon_url=member.avatar_url)
-        await self.bot.door_channel.send(embed = embed)
+      door_channel = getDoor(member.guild.id)
+      embed = discord.Embed(title = "Member joined!!!!", description =member.name,color = discord.Color.green())
+      embed.set_author(name= member.name, icon_url=member.avatar_url)
+      await door_channel.send(embed = embed)
 
     #logging for member leaving
     @commands.Cog.listener()
     async def on_member_remove(self, member):
+        door_channel = getDoor(member.guild.id)
         embed = discord.Embed(title = "Member left!!!!", description = member.name,color = discord.Color.red())
         embed.set_author(name= member.name, icon_url=member.avatar_url)
-        await self.bot.door_channel.send(embed = embed)
+        await door_channel.send(embed = embed)
 
     #A command for setting the logging channel to be a different one
     @commands.command(description = "Changes the log channel to be a different one for a more QOL channel to be set separately.")

@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 import datetime as Dt
+import os
 import json
 import asyncio
 
@@ -31,12 +32,14 @@ class Utility(commands.Cog):
 
         with open("prefixes.json", "w") as f:
             json.dump(prefixes, f)
+            f.close()
 
         
-        config = {};
+        config = {}
         with open("server_configs.json", "r") as f:
             config = json.load(f)
-            config[str(guild.id)] = {"log":None, "door": None, "Spam Ignore": []}
+
+        config[str(guild.id)] = {"log":None,"Spam": False, "door": None, "Spam Ignore": []}
 
         with open("server_configs.json", "w") as f:
             json.dump(config, f)

@@ -1,21 +1,31 @@
 import discord
 from discord.ext import commands
 from discord.ext import tasks
+import json
+
+from discord.ext.commands.core import command
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
         #Here, I loop the task of cleaning the spam file every 20 seconds
-        @tasks.loop(seconds = 20)
-        async def clean_spam(seconds = 20):
-            with open("spam_detect.txt", "r+") as file:
+        @tasks.loop(seconds = 15)
+        async def clean_spam(seconds = 15):
+            with open("spam_detect.txt", "w+") as file:
                 file.truncate(0)
 
     #This listener detects spam in the channels except those marked for spam
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.channel not in self.bot.spam_channels:
+        spamchannels = []
+        Spambool = False
+        with open("server_configs.json", "r") as f:
+            data = json.load(f)
+            spamchannels = data[str(message.guild.id)]["Spam Ignore"]
+            Spambool = data[str(message.guild.id)]["Spam"]
+
+        if Spambool and (not spamchannels or message.channel.id not in spamchannels):
             counter = 0
             with open ("spam_detect.txt", "r+") as file:
                 for lines in file:
@@ -161,8 +171,11 @@ class Moderation(commands.Cog):
         if channel in self.bot.spam_channels:
             await ctx.send("This channel already exists in our spam list.")
         else:
-            self.bot.spam_channels.append(channel)
-            await ctx.send("Spam channels added!!!!")
+            data = {}
+            with open("server_configs.json", "w") as f:
+                data = json.load(f)
+
+            data[str(ctx.guild.id)]["Spam Ignore"].append(channel.id)
 
     @addspam.error
     async def addspamError(self, ctx, error):
@@ -183,6 +196,20 @@ class Moderation(commands.Cog):
     async def rmspamError(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not decide which channels I detect spam in! Begone thot!")
+
+    #Flips the spam on or off
+    @commands.command(description = "Toggles the spam to on or off on your server. Gotta keep spammers at bay!")
+    @commands.has_permissions(administrator = True)
+    async def togglespam(self, ctx):
+        data = {}
+        with open("server_configs.json", "r") as f:
+            data = json.load(f)
+
+        data[str(ctx.guild.id)]["Spam"] = not(data[str(ctx.guild.id)]["Spam"])
+        truth = data[str(ctx.guild.id)]["Spam"]
+        with open("server_configs.json", "w") as f:
+            json.dump(data, f)
+        await ctx.send(f"Spam detection has been set to {truth} on your server.")
 
 def setup(bot):
     bot.add_cog(Moderation(bot))
