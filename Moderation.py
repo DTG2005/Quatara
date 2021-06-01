@@ -36,7 +36,11 @@ class Moderation(commands.Cog):
                 file.writelines(f"{str(message.author.id) + str(message.channel.id) + message.content}\n")
                 if counter > 5:
                     file.truncate(0)
-                    await message.channel.send("You are spamming. Proceeding to ping <@305403872438910977>, <@698218252119179365> and <@384331120755474442> to take action.")
+                    id = 0
+                    with open("role_configs.json", "r") as f:
+                        data = json.load(f)
+                        id = data[str(message.guild.id)]["Moderator"]
+                    await message.channel.send(f"You are spamming. Proceeding to ping <@&{id}> to take action.")
 
     #This is the kick command, pretty self explanatory imo
     @commands.command(description = "Kicks members, supa simple lil command all of ya folks should know right?", aliases = ["yeet"])
@@ -233,6 +237,24 @@ class Moderation(commands.Cog):
     async def tserror(self, ctx, error):
       if isinstance(error, commands.MissingPermissions):
         await ctx.send("You do not have the authorisation to decide to toggle the spam for this server! Next time, consult your superiors.")
+
+    #Sets the Moderator role to be pinged when Spam occurs on your server
+    @commands.command(description = "Sets the role to be mentioned when spam is detected on your server to start the spicy drama.")
+    @commands.has_permissions(administrator = True)
+    async def setMod(self, ctx, role : discord.Role):
+        data = {}
+        with open("role_configs.json", "r") as f:
+            data = json.load(f)
+        data[str(ctx.guild.id)]["Moderator"] = role.id
+
+        with open("role_configs.json", "w") as f:
+            json.dump(data, f)
+        await ctx.send(f"Moderator role is now set to {role.mention}. This role will now be pinged when spam is detected.")
+
+    @setMod.error
+    async def sMerror(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("Begone mortal! You cannot set the moderator role for this server! Have an admin try to use the command!")
 
 def setup(bot):
     bot.add_cog(Moderation(bot))

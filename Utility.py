@@ -44,6 +44,14 @@ class Utility(commands.Cog):
         with open("server_configs.json", "w") as f:
             json.dump(config, f)
 
+        roles = {}
+        with open("role_configs.json", "r") as f:
+            roles = json.load(f)
+        roles[str(guild.id)] = {"Moderator": None, "Member": None, "Mute": None}
+
+        with open("role_configs.json", "w") as f:
+            json.dump(roles, f)
+
     @commands.Cog.listener()
     async def on_message(self, message):
         try:
