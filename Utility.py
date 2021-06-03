@@ -19,7 +19,13 @@ class Utility(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        await member.send("Welcome to our sweet lil server, pal. Look over there on your name. Boring pink, right? Let's spice it up. Go into the channel named acquire your roles and claim your roles. Keep chilling. We hope you enjoy your stay in our sweet lil server.")
+        role = None
+        with open("role_configs.json", "r") as f:
+            data = json.load(f)
+            role = data[str(member.guild.id)]["Member"]
+        if role is not None:
+            membrole = member.guild.get_role(role)
+            await member.add_roles(membrole, reason = "Member joined")
 
     #Loads the JSON file to add a new prefix into the JSON before dumping it to store the new prefix data.
     @commands.Cog.listener()
@@ -48,6 +54,14 @@ class Utility(commands.Cog):
         with open("role_configs.json", "r") as f:
             roles = json.load(f)
         roles[str(guild.id)] = {"Moderator": None, "Member": None, "Mute": None}
+
+        with open("role_configs.json", "w") as f:
+            json.dump(roles, f)
+
+        warns = {}
+        with open("warns.json", "r") as f:
+            warns = json.load(f)
+        warns[str(guild.id)] = {"Warns": {}, "Superwarns": {}}
 
         with open("role_configs.json", "w") as f:
             json.dump(roles, f)
