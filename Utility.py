@@ -34,7 +34,7 @@ class Utility(commands.Cog):
         with open("prefixes.json", "r") as f:
             prefixes = json.load(f)
 
-        prefixes[str(guild.id)] = "y-"
+        prefixes[str(guild.id)] = "y!"
 
         with open("prefixes.json", "w") as f:
             json.dump(prefixes, f)
