@@ -27,6 +27,7 @@ class Logging(commands.Cog):
             embed = discord.Embed(title = f"{message.author.name} deleted a message, heads up!!!", description = "", color = discord.Color.red())
             embed.add_field(name= message.content, value= f"Logged in <#{log_channel.id}>")
             embed.set_author(name= message.author.name, icon_url=message.author.avatar_url)
+            embed.set_footer(text = message.channel.name)
             await log_channel.send(embed=embed)
 
     #logging for messages being edited
@@ -37,6 +38,7 @@ class Logging(commands.Cog):
             embed.add_field(name= messageOrig.content, value= "The message before the edit.")
             embed.add_field(name= messageEdit.content, value= "The message after being edited.")
             embed.set_author(name= messageOrig.author.name, icon_url=messageOrig.author.avatar_url)
+            embed.set_footer(text= messageOrig.channel.name)
             channel = self.bot.get_channel(getLog(messageOrig.guild.id))
             await channel.send(embed = embed)
 
