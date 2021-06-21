@@ -66,7 +66,7 @@ class Misc(commands.Cog):
     @commands.command(
         description = "A command embedded into my mainframe to pay respects to my designers.", aliases = ["about"]
         )
-    async def info(ctx):
+    async def info(self, ctx):
         await ctx.send("I am created thanks to a project undertook by <@305403872438910977>, on the advisory of <@698218252119179365>. My artwork is done by <@581327644931391498>, and you are cordially requested to please contact her incase you want to commission an artwork. She does awesome artwork and can also give you free hugs.")
 
 def setup(bot):
