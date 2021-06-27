@@ -6,7 +6,7 @@ import json
 import asyncio
 
 QOTDPingDict = {1:734436945689706519, 2:305403872438910977, 3:384331120755474442, 4: 698218252119179365, 5:762010102059237397, 6: 690967030299361310, 7:802770234292436992}
-T3PingDict = {1:734436945689706519, 2: None, 3:384331120755474442, 4:698218252119179365, 5:305403872438910977, 6:690967030299361310, 7:802770234292436992}
+T3PingDict = {1:734436945689706519, 2: 745907752844394537, 3:384331120755474442, 4:698218252119179365, 5:305403872438910977, 6:690967030299361310, 7:802770234292436992}
 
 class Utility(commands.Cog):
     def __init__(self, bot):
@@ -16,6 +16,37 @@ class Utility(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print("Starting countdown...YEEEEEEEEEEEEEEEEEEEEET!!!!")
+
+        datap = {}
+        for server in self.bot.guilds:
+            with open("prefixes.json", "r") as f:
+                data = json.load(f)
+                if server not in data:
+                    data["server"] = "y!"
+                datap = data
+            
+            with open("prefixes.json", "w") as f:
+                json.dump(datap, f)
+
+        datab = {}
+        for server in self.bot.guilds:
+            with open("server_configs.json", "r") as f:
+                data = json.load(f)
+                if server not in data:
+                    data["server"] = {"log": None, "Spam": None, "door": None, "Spam Ignore": []}
+                datab = data
+            with open("server_configs.json", "w") as f:
+                json.dump(datab, f)
+
+        datar = {}
+        for server in self.bot.guilds:
+            with open("role_configs.json", "r") as f:
+                data = json.load(f)
+                if server not in data:
+                    data["server"] = {"Moderator": None, "Member": None, "Mute": None}
+                datar = data
+            with open("server_configs.json", "w") as f:
+                json.dump(datar, f)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -34,7 +65,7 @@ class Utility(commands.Cog):
         with open("prefixes.json", "r") as f:
             prefixes = json.load(f)
 
-        prefixes[str(guild.id)] = "y-"
+        prefixes[str(guild.id)] = "y!"
 
         with open("prefixes.json", "w") as f:
             json.dump(prefixes, f)
@@ -106,18 +137,18 @@ class Utility(commands.Cog):
             await ctx.send("We cannot let anyone but admins rewrite our prefixes because others are weaklings.")
 
     
-    @commands.command(description = "Sets up autoroles in the given channel using setup.", aliases = ["rr"])
-    async def reactionrole(self, ctx):
-        await ctx.send("The reaction role setup is up. What channel do you want the reaction role in?")
-
-        def check(m):
-            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id and m.content in m.guild.text_channels
-
-        await self.bot.wait_for('message', check = check, timeout = 30)
-        try:
-            await ctx.send("Channel registered.")
-        except asyncio.TimeoutError:
-            await ctx.send("Timeout. Restart the setup to finish the reaction role.")
+#   @commands.command(description = "Sets up autoroles in the given channel using setup.", aliases = ["rr"])
+#   async def reactionrole(self, ctx):
+#       await ctx.send("The reaction role setup is up. What channel do you want the reaction role in?")
+#
+#       def check(m):
+#           return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id and m.content in m.guild.text_channels
+#
+#       await self.bot.wait_for('message', check = check, timeout = 30)
+#       try:
+#           await ctx.send("Channel registered.")
+#       except asyncio.TimeoutError:
+#           await ctx.send("Timeout. Restart the setup to finish the reaction role.")
 
 def setup(bot):
     bot.add_cog(Utility(bot))
