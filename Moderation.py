@@ -9,21 +9,20 @@ class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        #Here, I loop the task of cleaning the spam file every 20 seconds
-        @tasks.loop(seconds = 15)
-        async def clean_spam(seconds = 15):
-            with open("spam_detect.txt", "w+") as file:
-                file.truncate(0)
+    #Here, I loop the task of cleaning the spam file every 20 seconds
+    @tasks.loop(seconds = 15)
+    async def clean_spam(seconds = 15):
+        with open("spam_detect.txt", "w+") as file:
+            file.truncate(0)
 
     #This listener detects spam in the channels except those marked for spam
     @commands.Cog.listener()
     async def on_message(self, message):
         spamchannels = []
         Spambool = False
-        with open("server_configs.json", "r") as f:
-            data = json.load(f)
-            spamchannels = data[str(message.guild.id)]["Spam Ignore"]
-            Spambool = data[str(message.guild.id)]["Spam"]
+        data = dict(self.bot.col.find_one({"_id": "server_configs"}))
+        spamchannels = data[str(message.guild.id)]["Spam Ignore"]
+        Spambool = data[str(message.guild.id)]["Spam"]
 
         if Spambool and (not spamchannels or message.channel.id not in spamchannels):
             counter = 0
@@ -37,9 +36,8 @@ class Moderation(commands.Cog):
                 if counter > 5:
                     file.truncate(0)
                     id = 0
-                    with open("role_configs.json", "r") as f:
-                        data = json.load(f)
-                        id = data[str(message.guild.id)]["Moderator"]
+                    data = dict(self.bot.col.find_one({"_id": "role_configs"}))
+                    id = data[str(message.guild.id)]["Moderator"]
                     await message.channel.send(f"You are spamming. Proceeding to ping <@&{id}> to take action.")
 
     #This is the kick command, pretty self explanatory imo
@@ -67,7 +65,7 @@ class Moderation(commands.Cog):
         await member.send(f"Hey punk, by the grace of the Yeet GOD, you have been banned for {reason}.")
 
     @ban.error
-    async def kickerror(self, ctx, error):
+    async def banerror(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("Hey mods! We have an imposter tryna ban someone without thy permissions. Do with him as thou wisheth.")
 
@@ -87,10 +85,9 @@ class Moderation(commands.Cog):
     async def mute(self, ctx, user : discord.Member, *, reason= "No reason provided."):
         role = None
         MuteRole = None
-        with open("role_configs.json", "r") as f:
-            data = json.load(f)
-            role = data[str(ctx.guild.id)]["Member"]
-            MuteRole = data[str(ctx.guild.id)]["Mute"]
+        data = dict(self.bot.col.find_one({"_id": "role_configs"}))
+        role = data[str(ctx.guild.id)]["Member"]
+        MuteRole = data[str(ctx.guild.id)]["Mute"]
         if MuteRole is not None and role is not None:
             Role = ctx.guild.get_role(role)
             muteRole = ctx.guild.get_role(MuteRole)
@@ -110,10 +107,9 @@ class Moderation(commands.Cog):
     async def unmute(self, ctx, user : discord.Member, *, reason= "No reason provided."):
         role = None
         MuteRole = None
-        with open("role_configs.json", "r") as f:
-            data = json.load(f)
-            role = data[str(ctx.guild.id)]["Member"]
-            MuteRole = data[str(ctx.guild.id)]["Mute"]
+        data = dict(self.bot.col.find_one({"_id": "role_configs"}))
+        role = data[str(ctx.guild.id)]["Member"]
+        MuteRole = data[str(ctx.guild.id)]["Mute"]
         if MuteRole is not None and role is not None:
             Role = ctx.guild.get_role(role)
             muteRole = ctx.guild.get_role(MuteRole)
@@ -124,162 +120,156 @@ class Moderation(commands.Cog):
             await ctx.send("You have not configured either the member or the muted role. Configure both to be able to mute members.")
 
     @mute.error
-    async def muteError(self, ctx, error):
+    async def unmuteError(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You tried to unmute someone but can't! Hah! You shouldn't try to be a god by giving other their speech back, mortal.")
 
-#    #A warm command to give members warnings before voiding them :kekw:
-#    @commands.command(description = "Warns members that might commit wrongdoings. I mean you have to be merciful since our Satan isn't. [Note: A reason is compulsory for using this command.")
-#    @commands.has_permissions(kick_members = True)
-#    async def warn(self, ctx, user : discord.Member, *, reason):
-#        #Check if the user has warns from the file
-#        warns = {}
-#        data = {}
-#        with open("warns.json", "r") as f:
-#            data = json.load(f)
-#            warns = data[str(ctx.guild.id)]["Warns"]
-#        if str(user.id) in warns:
-#            if warns[str(user.id)] == 3:
-#                #we use the same code we used with mute
-#                role = None
-#                MuteRole = None
-#                with open("role_configs.json", "r") as f:
-#                    data = json.load(f)
-#                    role = data[str(ctx.guild.id)]["Member"]
-#                    MuteRole = data[str(ctx.guild.id)]["Mute"]
-#                if MuteRole is not None and role is not None:
-#                    Role = ctx.guild.get_role(role)
-#                    muteRole = ctx.guild.get_role(MuteRole)
-#                    await user.remove_roles(Role, reason= reason)
-#                    await user.add_roles(muteRole, reason= reason)
-#                    warns.pop(str(user.id))
-#                    await ctx.send(f"{user.name} has been muted over accumulation of 3 warnings. The current reason for warning was {reason}!!! All hail Da YEET GOD!!!")
-#                else:
-#                    await ctx.send("Cannot warn further, muted role has not been set up. What kind of moderation do you think I'd do if you don't give me the roles, dummy.")
-#                data[str(ctx.guild.id)]["Warns"] = warns
-#            else:
-#                warnnum = warns[str(user.id)]
-#                warnnum += 1
-#                warns.pop(str(user.id))
-#                warns[str(user.id)] = warnnum
-#                data[str(ctx.guild.id)]["Warns"] = warns
-#                await ctx.send(f"{user.name} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = {3 - warns[user.id]}.")
-#        else:
-#            warns[str(user.id)] = 1
-#            data[str(ctx.guild.id)]["Warns"] = warns
-#            await ctx.send(f"{user.name} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = {3 - warns[user.id]}.")
-#        with open("warns.json", "w") as f:
-#            json.dump(data, f)
-#
-#
-#    @warn.error
-#    async def warnError(self, ctx, error):
-#        if isinstance(error, commands.MissingPermissions):
-#            await ctx.send("You can't even handle your own habit of stealing the job of Mods, why try to warn others?")
-#
-#    #A superwarn commands for more serious stuff
-#    @commands.command(description = "Warns pestilence for more serious stuff. These get YEETed instantly on 3 warns instead of being muted")
-#    @commands.has_permissions(kick_members = True)
-#    async def superwarn(self, ctx, user : discord.Member, *, reason):
-#        superwarns = {}
-#        data = {}
-#        with open("warns.json", "r") as f:
-#            data = json.load(f)
-#            superwarns = data[str(ctx.guild.id)]["Superwarns"]
-#        if superwarns:
-#            if str(user.id) in superwarns:
-#                if superwarns[str(user.id)] == 3:
-#                    await user.kick(reason= reason)
-#                    await ctx.send(f"{user.name} has been kicked after the accumulation of 3 superwarnings. The reason for the last superwarning was {reason}. All hail Da YEETs!!!")
-#                    await user.send(f"Thou hast been kicked, pestilence, after 3 superwarnings. The reason for thy last warning was {reason}.")
-#                    superwarns.pop(str(user.id))
-#                    data[str(ctx.guild.id)]["Superwarns"] = superwarns
-#                    with open("warns.json", "w") as f:
-#                        json.dump(data, f)
-#                else:
-#                    superwarns[str(user.id)] += 1
-#                    data[str(ctx.guild.id)]["Superwarns"] = superwarns
-#                    await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = {3 - self.bot.superwarns[user]}.")
-#                    with open("warns.json", "w") as f:
-#                        json.dump(data, f)
-#            else:
-#                superwarns[str(user.id)] = 1
-#                data[str(ctx.guild.id)]["Superwarns"] = superwarns
-#                await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = {3 - superwarns[user.id]}.")
-#                with open("warns.json", "w") as f:
-#                    json.dump(data, f)
-#        else:
-#            superwarns[str(user.id)] = 1
-#            data[str(ctx.guild.id)]["Superwarns"] = superwarns
-#            await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = {3 - superwarns[user.id]}.")
-#            with open("warns.json", "w") as f:
-#                json.dump(data, f)
-#            
-#    @superwarn.error
-#    async def superwarnError(self, ctx, error):
-#        if isinstance(error, commands.MissingPermissions):
-#            await ctx.send("You tried to superwarn without permissions. Satan surely has a separate role reserved for you in hell.")
-#
-#    #A forgive command in case someone did a lot of good work and you are like, okay let's pardon this guy's warnings
-#    @commands.command(description = "Clears the warnings from a redeemed soul. Good work, boi!")
-#    @commands.has_permissions(kick_members = True)
-#    async def forgive(self, ctx, user : discord.Member):
-#        warns = {}
-#        superwarns = {}
-#        data = {}
-#        with open("warns.json", "r") as f:
-#            data = json.load(f)
-#            warns = data[str(ctx.guild.id)]["Warn"]
-#            superwarns = data[str(ctx.guild.id)]["Superwarns"]
-#        if warns and superwarns:
-#            if user.id in warns and superwarns:
-#                warns.pop(user.id)
-#                superwarns.pop(user.id)
-#                await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
-#                data[str(ctx.guild.id)]["Warns"] = warns
-#                data[str(ctx.guild.id)]["Superwarns"] = superwarns
-#                with open("warns.json", "w") as f:
-#                    json.dump(data,f)
-#            elif user.id in warns:
-#                warns.pop(user.id)
-#                await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
-#                data[str(ctx.guild.id)]["Warns"] = warns
-#                with open("warns.json", "w") as f:
-#                    json.dump(data, f)
-#            elif user.id in superwarns:
-#                superwarns.pop(user.id)
-#                await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
-#                data[str(ctx.guild.id)]["Superwarns"]
-#                with open("warns.json", "w") as f:
-#                    json.dump(data,f)
-#            else:
-#                await ctx.send("We can't find any warns for our good boi. I don't think he's sinned before, mind checking your records?")
-#        else:
-#            await ctx.send("We can't find any warns for our good boi. I don't think he's sinned before, mind checking your records?")
-#
-#    @forgive.error
-#    async def forgiveError(self, ctx, error):
-#        if isinstance(error, commands.MissingPermissions):
-#            await ctx.send("You can't forgive when you don't have the power to. So don't try to act smart, it's scummy. And sus.")
+    #A warm command to give members warnings before voiding them :kekw:
+    @commands.command(description = "Warns members that might commit wrongdoings. I mean you have to be merciful since our Satan isn't. [Note: A reason is compulsory for using this command.")
+    @commands.has_permissions(kick_members = True)
+    async def warn(self, ctx, user : discord.Member, *, reason):
+        #Check if the user has warns from the file
+        warns = {}
+        data = {}
+        with open("warns.json", "r") as f:
+            data = json.load(f)
+            warns = data[str(ctx.guild.id)]["Warns"]
+        if str(user.id) in warns:
+            if warns[str(user.id)] == 3:
+                #we use the same code we used with mute
+                role = None
+                MuteRole = None
+                with open("role_configs.json", "r") as f:
+                    data = json.load(f)
+                    role = data[str(ctx.guild.id)]["Member"]
+                    MuteRole = data[str(ctx.guild.id)]["Mute"]
+                if MuteRole is not None and role is not None:
+                    Role = ctx.guild.get_role(role)
+                    muteRole = ctx.guild.get_role(MuteRole)
+                    await user.remove_roles(Role, reason= reason)
+                    await user.add_roles(muteRole, reason= reason)
+                    warns.pop(str(user.id))
+                    await ctx.send(f"{user.name} has been muted over accumulation of 3 warnings. The current reason for warning was {reason}!!! All hail Da YEET GOD!!!")
+                else:
+                    await ctx.send("Cannot warn further, muted role has not been set up. What kind of moderation do you think I'd do if you don't give me the roles, dummy.")
+                data[str(ctx.guild.id)]["Warns"] = warns
+            else:
+                warnnum = warns[str(user.id)]
+                warnnum += 1
+                warns.pop(str(user.id))
+                warns[str(user.id)] = warnnum
+                data[str(ctx.guild.id)]["Warns"] = warns
+                await ctx.send(f"{user.name} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = {3 - warns[user.id]}.")
+        else:
+            warns[str(user.id)] = 1
+            data[str(ctx.guild.id)]["Warns"] = warns
+            await ctx.send(f"{user.name} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = {3 - warns[user.id]}.")
+        with open("warns.json", "w") as f:
+            json.dump(data, f)
+
+
+    @warn.error
+    async def warnError(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You can't even handle your own habit of stealing the job of Mods, why try to warn others?")
+
+    #A superwarn commands for more serious stuff
+    @commands.command(description = "Warns pestilence for more serious stuff. These get YEETed instantly on 3 warns instead of being muted")
+    @commands.has_permissions(kick_members = True)
+    async def superwarn(self, ctx, user : discord.Member, *, reason):
+        superwarns = {}
+        data = {}
+        with open("warns.json", "r") as f:
+            data = json.load(f)
+            superwarns = data[str(ctx.guild.id)]["Superwarns"]
+        if superwarns:
+            if str(user.id) in superwarns:
+                if superwarns[str(user.id)] == 3:
+                    await user.kick(reason= reason)
+                    await ctx.send(f"{user.name} has been kicked after the accumulation of 3 superwarnings. The reason for the last superwarning was {reason}. All hail Da YEETs!!!")
+                    await user.send(f"Thou hast been kicked, pestilence, after 3 superwarnings. The reason for thy last warning was {reason}.")
+                    superwarns.pop(str(user.id))
+                    data[str(ctx.guild.id)]["Superwarns"] = superwarns
+                    with open("warns.json", "w") as f:
+                        json.dump(data, f)
+                else:
+                    superwarns[str(user.id)] += 1
+                    data[str(ctx.guild.id)]["Superwarns"] = superwarns
+                    await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = {3 - self.bot.superwarns[user]}.")
+                    with open("warns.json", "w") as f:
+                        json.dump(data, f)
+            else:
+                superwarns[str(user.id)] = 1
+                data[str(ctx.guild.id)]["Superwarns"] = superwarns
+                await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = {3 - superwarns[user.id]}.")
+                with open("warns.json", "w") as f:
+                    json.dump(data, f)
+        else:
+            superwarns[str(user.id)] = 1
+            data[str(ctx.guild.id)]["Superwarns"] = superwarns
+            await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = {3 - superwarns[user.id]}.")
+            with open("warns.json", "w") as f:
+                json.dump(data, f)
+            
+    @superwarn.error
+    async def superwarnError(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You tried to superwarn without permissions. Satan surely has a separate role reserved for you in hell.")
+
+    #A forgive command in case someone did a lot of good work and you are like, okay let's pardon this guy's warnings
+    @commands.command(description = "Clears the warnings from a redeemed soul. Good work, boi!")
+    @commands.has_permissions(kick_members = True)
+    async def forgive(self, ctx, user : discord.Member):
+        warns = {}
+        superwarns = {}
+        data = {}
+        with open("warns.json", "r") as f:
+            data = json.load(f)
+            warns = data[str(ctx.guild.id)]["Warn"]
+            superwarns = data[str(ctx.guild.id)]["Superwarns"]
+        if warns and superwarns:
+            if user.id in warns and superwarns:
+                warns.pop(user.id)
+                superwarns.pop(user.id)
+                await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
+                data[str(ctx.guild.id)]["Warns"] = warns
+                data[str(ctx.guild.id)]["Superwarns"] = superwarns
+                with open("warns.json", "w") as f:
+                    json.dump(data,f)
+            elif user.id in warns:
+                warns.pop(user.id)
+                await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
+                data[str(ctx.guild.id)]["Warns"] = warns
+                with open("warns.json", "w") as f:
+                    json.dump(data, f)
+            elif user.id in superwarns:
+                superwarns.pop(user.id)
+                await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
+                data[str(ctx.guild.id)]["Superwarns"]
+                with open("warns.json", "w") as f:
+                    json.dump(data,f)
+            else:
+                await ctx.send("We can't find any warns for our good boi. I don't think he's sinned before, mind checking your records?")
+        else:
+            await ctx.send("We can't find any warns for our good boi. I don't think he's sinned before, mind checking your records?")
+
+    @forgive.error
+    async def forgiveError(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You can't forgive when you don't have the power to. So don't try to act smart, it's scummy. And sus.")
 
     #A command to add spam channels.
     @commands.command(description = "Adds spam channels where spamming is allowed.")
     @commands.has_permissions(administrator = True)
     async def addspam(self, ctx, channel : discord.TextChannel):
         spam_channels = []
-        with open("server_configs.json", "r") as f:
-            data = json.load(f)
-            spam_channels =data[str(ctx.guild.id)]["Spam Ignore"]
-        if channel in spam_channels:
+        data = dict(self.bot.col.find_one({"_id": "server_configs"}))
+        spam_channels = data[str(ctx.guild.id)]["Spam Ignore"]
+        if channel.id in spam_channels:
             await ctx.send("This channel already exists in our spam list.")
         else:
-            data = {}
-            with open("server_configs.json", "r") as f:
-                data = json.load(f)
-
             data[str(ctx.guild.id)]["Spam Ignore"].append(channel.id)
-            with open("server_configs.json", "w") as f:
-                json.dump(data, f)
+            self.bot.col.find_and_modify({"_id": "server_configs"})
             
             await ctx.send(f"Spam channel has been added to our list. We shall ping the moderators on spams in {channel.name} from now on.")
 
@@ -293,17 +283,12 @@ class Moderation(commands.Cog):
     @commands.has_permissions(administrator = True)
     async def rmspam(self, ctx, channel : discord.TextChannel):
         spam_channels =  []
-        with open("server_configs.json", "r") as f:
-            data = json.load(f)
-            spam_channels = data[str(ctx.guild.id)]["Spam Ignore"]
+        data = dict(self.bot.col.find_one({"_id": "server_configs"}))
+        spam_channels = data[str(ctx.guild.id)]["Spam Ignore"]
         await ctx.send(spam_channels)
         if channel.id in spam_channels:
-            data = {}
-            with open("server_configs.json", "r") as f:
-                data = json.load(f)
             data[str(ctx.guild.id)]["Spam Ignore"].remove(channel.id)
-            with open("server_configs.json", "w") as f:
-                json.dump(data, f)
+            self.bot.col.find_and_modify({"_id": "server_configs"}, data)
             await ctx.send("Spam channel removed!!!")
         else:
             await ctx.send("The channel isn't in the list of channels where spamming is allowed. Look again, maybe?")
@@ -317,14 +302,10 @@ class Moderation(commands.Cog):
     @commands.command(description = "Toggles the spam to on or off on your server. Gotta keep spammers at bay!")
     @commands.has_permissions(administrator = True)
     async def togglespam(self, ctx):
-        data = {}
-        with open("server_configs.json", "r") as f:
-            data = json.load(f)
-
+        data = dict(self.bot.col.find_one({"_id": "server_configs"}))
         data[str(ctx.guild.id)]["Spam"] = not(data[str(ctx.guild.id)]["Spam"])
         truth = data[str(ctx.guild.id)]["Spam"]
-        with open("server_configs.json", "w") as f:
-            json.dump(data, f)
+        self.bot.col.find_and_modify({"_id": "server_configs"}, data)
         await ctx.send(f"Spam detection has been set to {truth} on your server.")
     
     @togglespam.error
@@ -336,13 +317,9 @@ class Moderation(commands.Cog):
     @commands.command(description = "Sets the role to be mentioned when spam is detected on your server to start the spicy drama.")
     @commands.has_permissions(administrator = True)
     async def setMod(self, ctx, role : discord.Role):
-        data = {}
-        with open("role_configs.json", "r") as f:
-            data = json.load(f)
+        data = dict(self.bot.col.find_one({"_id": "role_configs"}))
         data[str(ctx.guild.id)]["Moderator"] = role.id
-
-        with open("role_configs.json", "w") as f:
-            json.dump(data, f)
+        self.bot.col.find_and_modify({"_id": "role_configs"}, data)
         await ctx.send(f"Moderator role is now set to {role.mention}. This role will now be pinged when spam is detected.")
 
     @setMod.error
@@ -354,11 +331,9 @@ class Moderation(commands.Cog):
     @commands.has_permissions(kick_members = True)
     async def setMember(self, ctx, role : discord.Role):
         data = {}
-        with open("role_configs.json", "r") as f:
-            data = json.load(f)
-            data[str(ctx.guild.id)]["Member"] = role.id
-        with open("role_configs.json", "w") as f:
-            json.dump(data, f)
+        data = dict(self.bot.col.find_one({"_id": "role_configs"}))
+        data[str(ctx.guild.id)]["Member"] = role.id
+        self.bot.col.find_and_modify({"_id": "role_configs"}, data)
         await ctx.send(f"The Member role is now set to {role.mention}. This role will now be given to members when they join the server and will be taken away when muted.")
 
     @setMember.error
@@ -370,11 +345,9 @@ class Moderation(commands.Cog):
     @commands.has_permissions(kick_members = True)
     async def setMute(self, ctx, role : discord.Role):
         data = {}
-        with open("role_configs.json", "r") as f:
-            data = json.load(f)
-            data[str(ctx.guild.id)]["Mute"] = role.id
-        with open("role_configs.json", "w") as f:
-            json.dump(data, f)
+        data = dict(self.bot.col.find_one({"_id": "role_configs"}))
+        data[str(ctx.guild.id)]["Mute"] = role.id
+        self.bot.col.find_and_modify({"_id": "role_configs"}, data)
         await ctx.send(f"The Muted role is now set to {role.mention}. This role will now be given to members when they are muted in replacement of the general Member role.")
 
     @setMute.error
