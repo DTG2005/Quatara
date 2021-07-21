@@ -35,6 +35,7 @@ class YeetBot (commands.Bot):
         self.col = self.db["Data"]
         self.load_extension("Misc")
         self.load_extension("Moderation")
+        self.load_extension("Fun")
         self.load_extension("Logging")
         self.load_extension("Utility")
 

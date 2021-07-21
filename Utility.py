@@ -43,11 +43,11 @@ class Utility(commands.Cog):
         for server in self.bot.guilds:
             data = self.bot.col.find_one({"_id": "server_configs"})
             if data is None:
-                data1 = {"_id" : "server_configs", str(server.id) : {"log": None, "Spam": False, "door": None, "Spam Ignore": []}}
+                data1 = {"_id" : "server_configs", str(server.id) : {"log": None, "Spam": False, "Autorole": False, "door": None, "Spam Ignore": []}}
                 self.bot.col.insert(data1)
             elif str(server.id) not in data:
                 data2 = data
-                data2[str(server.id)] = {"log": None, "Spam": False, "door": None, "Spam Ignore": []}
+                data2[str(server.id)] = {"log": None, "Spam": False, "Autorole": False, "door": None, "Spam Ignore": []}
                 self.bot.col.find_and_modify({"_id": "server_configs"}, data2)
 
         for server in self.bot.guilds:
@@ -59,6 +59,16 @@ class Utility(commands.Cog):
                 data2 = data
                 data2[str(server.id)] = {"Moderator" : None, "Member" : None, "Mute" : None}
                 self.bot.col.find_and_modify({"_id": "server_configs"}, data2)
+
+        for server in self.bot.guilds:
+            data = self.bot.col.find_one({"_id": "warns"})
+            if data is None:
+                data1 = {"_id" : "warns", str(server.id) : {"Warns": {}, "Superwarns": {}}}
+                self.bot.col.insert(data1)
+            elif str(server.id) not in data:
+                data2 = data
+                data2[str(server.id)] = {"Warns": {}, "Superwarns": {}}
+                self.bot.col.find_and_modify({"_id": "warns"}, data2)
             
             
     @commands.Cog.listener()
@@ -66,9 +76,12 @@ class Utility(commands.Cog):
         role = None
         data = self.bot.col.find_one({"_id": "role_configs"})
         role = data[str(member.guild.id)]["Member"]
+        data2 = self.bot.col.find_one({"_id": "server_configs"})
+        truth = data2[str(member.guild.id)]["Autorole"]
         if role is not None:
-            membrole = member.guild.get_role(role)
-            await member.add_roles(membrole, reason = "Member joined")
+            if truth:
+                membrole = member.guild.get_role(role)
+                await member.add_roles(membrole, reason = "Member joined")
 
     #Loads the JSON file to add a new prefix into the JSON before dumping it to store the new prefix data.
     @commands.Cog.listener()
@@ -83,7 +96,7 @@ class Utility(commands.Cog):
         
         config = self.bot.col.find_one({"_id": "server_configs"})
 
-        config[str(guild.id)] = {"log":None,"Spam": False, "door": None, "Spam Ignore": []}
+        config[str(guild.id)] = {"log":None,"Spam": False, "Autorole": False, "door": None, "Spam Ignore": []}
 
         self.bot.col.find_and_modify({"_id": "server_configs"}, config)
 

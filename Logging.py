@@ -1,6 +1,10 @@
 import discord
 import json
 from discord.ext import commands
+from datetime import datetime
+
+now = datetime.now()
+dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 
 class Logging(commands.Cog):
     def __init__(self, bot):
@@ -17,6 +21,7 @@ class Logging(commands.Cog):
         log_channel = self.bot.get_channel(self.getLog(message.guild.id))
         embed = discord.Embed(title = f"{message.author.name} deleted a message, heads up!!!", description = "", color = discord.Color.red())
         embed.add_field(name= message.content, value= f"Logged in <#{log_channel.id}>")
+        embed.set_footer(text =dt_string)
         await log_channel.send(embed=embed)
 
     #logging for messages being edited
@@ -26,6 +31,7 @@ class Logging(commands.Cog):
         embed.add_field(name= messageOrig.content, value= "The message before the edit.")
         embed.add_field(name= messageEdit.content, value= "The message after being edited.")
         channel = self.bot.get_channel(self.getLog(messageOrig.guild.id))
+        embed.set_footer(text =dt_string)
         await channel.send(embed = embed)
 
     #logging for member joining

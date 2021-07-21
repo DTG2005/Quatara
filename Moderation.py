@@ -130,19 +130,14 @@ class Moderation(commands.Cog):
     async def warn(self, ctx, user : discord.Member, *, reason):
         #Check if the user has warns from the file
         warns = {}
-        data = {}
-        with open("warns.json", "r") as f:
-            data = json.load(f)
-            warns = data[str(ctx.guild.id)]["Warns"]
+        data = self.bot.col.find_one({"_id": "warns"})
+        warns = data[str(ctx.guild.id)]["Warns"]
         if str(user.id) in warns:
             if warns[str(user.id)] == 3:
                 #we use the same code we used with mute
-                role = None
-                MuteRole = None
-                with open("role_configs.json", "r") as f:
-                    data = json.load(f)
-                    role = data[str(ctx.guild.id)]["Member"]
-                    MuteRole = data[str(ctx.guild.id)]["Mute"]
+                data = self.bot.col.find_one({"_id": "role_configs"})
+                role = data[str(ctx.guild.id)]["Member"]
+                MuteRole = data[str(ctx.guild.id)]["Mute"]
                 if MuteRole is not None and role is not None:
                     Role = ctx.guild.get_role(role)
                     muteRole = ctx.guild.get_role(MuteRole)
@@ -164,8 +159,7 @@ class Moderation(commands.Cog):
             warns[str(user.id)] = 1
             data[str(ctx.guild.id)]["Warns"] = warns
             await ctx.send(f"{user.name} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = {3 - warns[user.id]}.")
-        with open("warns.json", "w") as f:
-            json.dump(data, f)
+        self.bot.col.find_and_modify({"_id": "warns"}, data)
 
 
     @warn.error
@@ -178,10 +172,8 @@ class Moderation(commands.Cog):
     @commands.has_permissions(kick_members = True)
     async def superwarn(self, ctx, user : discord.Member, *, reason):
         superwarns = {}
-        data = {}
-        with open("warns.json", "r") as f:
-            data = json.load(f)
-            superwarns = data[str(ctx.guild.id)]["Superwarns"]
+        data = self.bot.col.find_one({"_id": "warns"})
+        superwarns = data[str(ctx.guild.id)]["Superwarns"]
         if superwarns:
             if str(user.id) in superwarns:
                 if superwarns[str(user.id)] == 3:
@@ -190,26 +182,22 @@ class Moderation(commands.Cog):
                     await user.send(f"Thou hast been kicked, pestilence, after 3 superwarnings. The reason for thy last warning was {reason}.")
                     superwarns.pop(str(user.id))
                     data[str(ctx.guild.id)]["Superwarns"] = superwarns
-                    with open("warns.json", "w") as f:
-                        json.dump(data, f)
+                    self.bot.col.find_and_modify({"_id": "warns"}, data)
                 else:
                     superwarns[str(user.id)] += 1
                     data[str(ctx.guild.id)]["Superwarns"] = superwarns
                     await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = {3 - self.bot.superwarns[user]}.")
-                    with open("warns.json", "w") as f:
-                        json.dump(data, f)
+                    self.bot.col.find_and_modify({"_id": "warns"}, data)
             else:
                 superwarns[str(user.id)] = 1
                 data[str(ctx.guild.id)]["Superwarns"] = superwarns
                 await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = {3 - superwarns[user.id]}.")
-                with open("warns.json", "w") as f:
-                    json.dump(data, f)
+                self.bot.col.find_and_modify({"_id": "warns"}, data)
         else:
             superwarns[str(user.id)] = 1
             data[str(ctx.guild.id)]["Superwarns"] = superwarns
             await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = {3 - superwarns[user.id]}.")
-            with open("warns.json", "w") as f:
-                json.dump(data, f)
+            self.bot.col.find_and_modify({"_id": "warns"}, data)
             
     @superwarn.error
     async def superwarnError(self, ctx, error):
@@ -222,11 +210,9 @@ class Moderation(commands.Cog):
     async def forgive(self, ctx, user : discord.Member):
         warns = {}
         superwarns = {}
-        data = {}
-        with open("warns.json", "r") as f:
-            data = json.load(f)
-            warns = data[str(ctx.guild.id)]["Warn"]
-            superwarns = data[str(ctx.guild.id)]["Superwarns"]
+        data = self.bot.col.find_one({"_id": "warns"})
+        warns = data[str(ctx.guild.id)]["Warns"]
+        superwarns = data[str(ctx.guild.id)]["Superwarns"]
         if warns and superwarns:
             if user.id in warns and superwarns:
                 warns.pop(user.id)
@@ -234,20 +220,17 @@ class Moderation(commands.Cog):
                 await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
                 data[str(ctx.guild.id)]["Warns"] = warns
                 data[str(ctx.guild.id)]["Superwarns"] = superwarns
-                with open("warns.json", "w") as f:
-                    json.dump(data,f)
+                self.bot.col.find_and_modify({"_id": "warns"}, data)
             elif user.id in warns:
                 warns.pop(user.id)
                 await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
                 data[str(ctx.guild.id)]["Warns"] = warns
-                with open("warns.json", "w") as f:
-                    json.dump(data, f)
+                self.bot.col.find_and_modify({"_id": "warns"}, data)
             elif user.id in superwarns:
                 superwarns.pop(user.id)
                 await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
                 data[str(ctx.guild.id)]["Superwarns"]
-                with open("warns.json", "w") as f:
-                    json.dump(data,f)
+                self.bot.col.find_and_modify({"_id": "warns"}, data)
             else:
                 await ctx.send("We can't find any warns for our good boi. I don't think he's sinned before, mind checking your records?")
         else:
@@ -354,6 +337,21 @@ class Moderation(commands.Cog):
     async def setMuteError(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You cannot set the muted role when your own role in the server is negligible. Begone!")
+
+    #Flips the spam on or off
+    @commands.command(description = "Toggles the autorole to on or off on your server. Autorole on gives the new joining members the Member role automatically.")
+    @commands.has_permissions(administrator = True)
+    async def toggleautorole(self, ctx):
+        data = dict(self.bot.col.find_one({"_id": "server_configs"}))
+        data[str(ctx.guild.id)]["Autorole"] = not(data[str(ctx.guild.id)]["Autorole"])
+        truth = data[str(ctx.guild.id)]["Spam"]
+        self.bot.col.find_and_modify({"_id": "server_configs"}, data)
+        await ctx.send(f"Autoroles has been set to {truth} on your server.")
+    
+    @toggleautorole.error
+    async def tarerror(self, ctx, error):
+      if isinstance(error, commands.MissingPermissions):
+        await ctx.send("You are not authorised to decide who gets what role. Begone!")
 
 def setup(bot):
     bot.add_cog(Moderation(bot))
