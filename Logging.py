@@ -59,7 +59,7 @@ class Logging(commands.Cog):
     async def on_user_update(self,userb4, userafter):
         changeTitleDict = {"av": "Heads up! Avatar changed!", "un" : "Heads up! Username changed!", "dc": "Heads up! Discriminator changed!"}
         changetype = None
-        if userb4.avatar != userafter.avater:
+        if userb4.avatar != userafter.avatar:
             changetype = "av"
         elif userb4.name != userafter.name:
             changetype = "un"
@@ -67,7 +67,7 @@ class Logging(commands.Cog):
             changetype = "dc"
         embed1 = discord.Embed(title= changeTitleDict[changetype], color= discord.Colour.green())
         if changetype == "av":
-            embed1.set_thumbnail(userafter.avatar_url)
+            embed1.set_thumbnail(url = userafter.avatar_url)
         elif changetype == "un":
             embed1.add_field(name= "Before:", value= userb4.name)
             embed1.add_field(name= "After:", value= userafter.name)
@@ -75,9 +75,10 @@ class Logging(commands.Cog):
             embed1.add_field(name= "Before:", value= userb4.discriminator)
             embed1.add_field(name= "After:", value= userafter.discriminator)
         embed1.set_author(name= userafter.name, icon_url= userafter.avatar_url)
-        dic = self.bot.col.find_one({"_id": "server_configs"})
-        log_channel = self.bot.get_channel(dic[str(userafter.guild.id)]["log"])
-        await log_channel.send(embed= embed1)
+        for guild in userafter.mutual_guilds:
+            dic = self.bot.col.find_one({"_id": "server_configs"})
+            log_channel = self.bot.get_channel(dic[str(guild.id)]["log"])
+            await log_channel.send(embed= embed1)
 
     #A command for setting the logging channel to be a different one
     @commands.command(description = "Changes the log channel to be a different one for a more QOL channel to be set separately.")
