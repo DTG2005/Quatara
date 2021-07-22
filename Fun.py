@@ -37,7 +37,7 @@ class Fun(commands.Cog):
         aliases = ["8ball", "soothsay"]
     )
     async def predict(self, ctx, *, question):
-        colordict = {"Good": 0x0000ff, "Bad": 0xff0000, "Neutral": discord.Colour.orange()}
+        colordict = {"Good": 0x00ff00, "Bad": 0xff0000, "Neutral": discord.Colour.orange()}
         choice = random.choice(["Good", "Bad", "Neutral"])
         answer = random.choice(predict_dict[choice])
 
