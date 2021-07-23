@@ -133,7 +133,7 @@ class Moderation(commands.Cog):
         data = self.bot.col.find_one({"_id": "warns"})
         warns = data[str(ctx.guild.id)]["Warns"]
         if str(user.id) in warns:
-            if warns[str(user.id)] == 3:
+            if warns[str(user.id)] == 2:
                 #we use the same code we used with mute
                 data = self.bot.col.find_one({"_id": "role_configs"})
                 role = data[str(ctx.guild.id)]["Member"]
@@ -144,22 +144,24 @@ class Moderation(commands.Cog):
                     await user.remove_roles(Role, reason= reason)
                     await user.add_roles(muteRole, reason= reason)
                     warns.pop(str(user.id))
-                    await ctx.send(f"{user.name} has been muted over accumulation of 3 warnings. The current reason for warning was {reason}!!! All hail Da YEET GOD!!!")
+                    await ctx.send(f"{user.name} has been muted over accumulation of 3 warnings. The current reason for warning was {reason}!!! All hail Satan!!!")
                 else:
                     await ctx.send("Cannot warn further, muted role has not been set up. What kind of moderation do you think I'd do if you don't give me the roles, dummy.")
                 data[str(ctx.guild.id)]["Warns"] = warns
+                self.bot.col.find_and_modify({"_id": "warns"}, data)
             else:
                 warnnum = warns[str(user.id)]
                 warnnum += 1
                 warns.pop(str(user.id))
                 warns[str(user.id)] = warnnum
                 data[str(ctx.guild.id)]["Warns"] = warns
-                await ctx.send(f"{user.name} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = {3 - warns[user.id]}.")
+                await ctx.send(f"{user.name} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = 1.")
+                self.bot.col.find_and_modify({"_id": "warns"}, data)
         else:
+            await ctx.send(f"{user.mention} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = 2.")
             warns[str(user.id)] = 1
             data[str(ctx.guild.id)]["Warns"] = warns
-            await ctx.send(f"{user.name} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = {3 - warns[user.id]}.")
-        self.bot.col.find_and_modify({"_id": "warns"}, data)
+            self.bot.col.find_and_modify({"_id": "warns"}, data)
 
 
     @warn.error
@@ -176,7 +178,7 @@ class Moderation(commands.Cog):
         superwarns = data[str(ctx.guild.id)]["Superwarns"]
         if superwarns:
             if str(user.id) in superwarns:
-                if superwarns[str(user.id)] == 3:
+                if superwarns[str(user.id)] == 2:
                     await user.kick(reason= reason)
                     await ctx.send(f"{user.name} has been kicked after the accumulation of 3 superwarnings. The reason for the last superwarning was {reason}. All hail Da YEETs!!!")
                     await user.send(f"Thou hast been kicked, pestilence, after 3 superwarnings. The reason for thy last warning was {reason}.")
@@ -186,17 +188,17 @@ class Moderation(commands.Cog):
                 else:
                     superwarns[str(user.id)] += 1
                     data[str(ctx.guild.id)]["Superwarns"] = superwarns
-                    await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = {3 - self.bot.superwarns[user]}.")
+                    await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = 1.")
                     self.bot.col.find_and_modify({"_id": "warns"}, data)
             else:
                 superwarns[str(user.id)] = 1
                 data[str(ctx.guild.id)]["Superwarns"] = superwarns
-                await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = {3 - superwarns[user.id]}.")
+                await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = 2.")
                 self.bot.col.find_and_modify({"_id": "warns"}, data)
         else:
             superwarns[str(user.id)] = 1
             data[str(ctx.guild.id)]["Superwarns"] = superwarns
-            await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = {3 - superwarns[user.id]}.")
+            await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = 2.")
             self.bot.col.find_and_modify({"_id": "warns"}, data)
             
     @superwarn.error
@@ -213,28 +215,27 @@ class Moderation(commands.Cog):
         data = self.bot.col.find_one({"_id": "warns"})
         warns = data[str(ctx.guild.id)]["Warns"]
         superwarns = data[str(ctx.guild.id)]["Superwarns"]
-        if warns and superwarns:
-            if user.id in warns and superwarns:
-                warns.pop(user.id)
-                superwarns.pop(user.id)
-                await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
-                data[str(ctx.guild.id)]["Warns"] = warns
-                data[str(ctx.guild.id)]["Superwarns"] = superwarns
-                self.bot.col.find_and_modify({"_id": "warns"}, data)
-            elif user.id in warns:
-                warns.pop(user.id)
-                await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
-                data[str(ctx.guild.id)]["Warns"] = warns
-                self.bot.col.find_and_modify({"_id": "warns"}, data)
-            elif user.id in superwarns:
-                superwarns.pop(user.id)
-                await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
-                data[str(ctx.guild.id)]["Superwarns"]
-                self.bot.col.find_and_modify({"_id": "warns"}, data)
-            else:
-                await ctx.send("We can't find any warns for our good boi. I don't think he's sinned before, mind checking your records?")
+        await ctx.send(warns)
+        await ctx.send(superwarns)
+        if str(user.id) in warns and str(user.id) in superwarns:
+            warns.pop(str(user.id))
+            superwarns.pop(str(user.id))
+            await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
+            data[str(ctx.guild.id)]["Warns"] = warns
+            data[str(ctx.guild.id)]["Superwarns"] = superwarns
+            self.bot.col.find_and_modify({"_id": "warns"}, data)
+        elif str(user.id) in warns:
+            warns.pop(str(user.id))
+            await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
+            data[str(ctx.guild.id)]["Warns"] = warns
+            self.bot.col.find_and_modify({"_id": "warns"}, data)
+        elif str(user.id) in superwarns:
+            superwarns.pop(str(user.id))
+            await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
+            data[str(ctx.guild.id)]["Superwarns"]
+            self.bot.col.find_and_modify({"_id": "warns"}, data)
         else:
-            await ctx.send("We can't find any warns for our good boi. I don't think he's sinned before, mind checking your records?")
+            await ctx.send("We can't find any warns for our good boi. I don't think they've sinned before, mind checking your records?")
 
     @forgive.error
     async def forgiveError(self, ctx, error):

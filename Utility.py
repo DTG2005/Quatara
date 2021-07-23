@@ -1,3 +1,4 @@
+from discord.shard import EventItem
 import discord
 from discord.ext import commands, tasks
 import datetime as Dt
@@ -9,9 +10,9 @@ import asyncio
 QOTDPingDict = {1:734436945689706519, 2:305403872438910977, 3:384331120755474442, 4: 698218252119179365, 5:762010102059237397, 6: 690967030299361310, 7:802770234292436992}
 T3PingDict = {1:734436945689706519, 2: 745907752844394537, 3:384331120755474442, 4:698218252119179365, 5:305403872438910977, 6:690967030299361310, 7:802770234292436992}
 
-EastTimeDict = {"1": [0, True], "2": [1, False], "3": [1, True], "4": [2, False], "5": [2, True], "6": [3, False], "7": [3, True], "8": [4, False], "9": [4, True], "10": [5, False], "11": [5, True], "12": [6, False], "13": [6, True], "14": [7, False], "15": [7, True], "16": [8, False], "17": [8, True], "18": [9, False], "19": [9, True], "20": [10, False], "21": [10, True], "22": [11, False], "23": [11, True], "24": [12, False], }
+EastTimeDict = {"1": ["+0", True], "2": [1, False], "3": [1, True], "4": [2, False], "5": [2, True], "6": [3, False], "7": [3, True], "8": [4, False], "9": [4, True], "10": [5, False], "11": [5, True], "12": [6, False], "13": [6, True], "14": [7, False], "15": [7, True], "16": [8, False], "17": [8, True], "18": [9, False], "19": [9, True], "20": [10, False], "21": [10, True], "22": [11, False], "23": [11, True], "24": [12, False], }
 
-WestTimeDict = {"1": [0, True], "2": [-1, False], "3": [-1, True], "4": [-2, False], "5": [-2, True], "6": [-3, False], "7": [-3, True], "8": [-4, False], "9": [-4, True], "10": [-5, False], "11": [-5, True], "12": [-6, False], "13": [-6, True], "14": [-7, False], "15": [-7, True], "16": [-8, False], "17": [-8, True], "18": [-9, False], "19": [-9, True], "20": [-10, False], "21": [-10, True], "22": [-11, False], "23": [-11, True], "24": [-12, False], }
+WestTimeDict = {"1": ["-0", True], "2": [-1, False], "3": [-1, True], "4": [-2, False], "5": [-2, True], "6": [-3, False], "7": [-3, True], "8": [-4, False], "9": [-4, True], "10": [-5, False], "11": [-5, True], "12": [-6, False], "13": [-6, True], "14": [-7, False], "15": [-7, True], "16": [-8, False], "17": [-8, True], "18": [-9, False], "19": [-9, True], "20": [-10, False], "21": [-10, True], "22": [-11, False], "23": [-11, True], "24": [-12, False], }
 
 def isTimeFormat(input):
     try:
@@ -133,10 +134,10 @@ class Utility(commands.Cog):
                                 data = json.load(f)
                                 timeDat = data[str(message.author.id)]
     
-                            GMT_Hrs = int(word.split(":")[0]) - timeDat[0]
+                            GMT_Hrs = int(word.split(":")[0]) - int(timeDat[0])
                             GMT_mins = int(word.split(":")[1])
                             if timeDat[1]:
-                                if timeDat[0] < 0:
+                                if timeDat[0] < 0 or timeDat[0] == "-0":
                                     GMT_mins + 30 
                                 else:
                                     GMT_mins - 30
@@ -165,10 +166,10 @@ class Utility(commands.Cog):
                                 data = json.load(f)
                                 timeDat1 = data[str(user.id)]
     
-                            GMT_Hrs += timeDat1[0]
-                            GMT_mins = int(word.split(":")[1])
+                            GMT_Hrs += int(timeDat1[0])
+                            GMT_mins += int(word.split(":")[1])
                             if timeDat1[1]:
-                                if timeDat1[0] < 0:
+                                if int(timeDat1[0]) < 0 or timeDat1[0] == "-0":
                                     GMT_mins - 30 
                                 else:
                                     GMT_mins + 30
@@ -215,11 +216,17 @@ class Utility(commands.Cog):
 
     @commands.command(description = "Pings the person whose QOTD it is, after all, world's pretty much full of forgetful dumbasses.", aliases = ["pingQOTD"])
     async def qotd(self, ctx):
-        await ctx.send(f"Today it is the turn of <@{QOTDPingDict[Dt.datetime.today().isoweekday()]}>. Ask your question before I have to use my tasers.")
+        if ctx.guild.id == 828926478661320744:
+            await ctx.send(f"Today it is the turn of <@{QOTDPingDict[Dt.datetime.today().isoweekday()]}>. Ask your question before I have to use my tasers.")
+        else:
+            await ctx.send("Don't mind this command it's just for a special server I'm in. Have a nice day.")
 
     @commands.command(description = "Pings the person whose Top 3 it is. I swear humans forget so much, how do they even have more romantic partners than us bots?", aliases = ["pingT3", "top3", "t3"])
     async def t3Ping(self, ctx):
-        await ctx.send(f"Today it is the turn of <@{T3PingDict[Dt.datetime.today().isoweekday()]}>. Send in your Top 3 or I'll ping Satan to banish your soul to the lowest pits of hell.")
+        if ctx.guild.id == 828926478661320744:
+            await ctx.send(f"Today it is the turn of <@{T3PingDict[Dt.datetime.today().isoweekday()]}>. Send in your Top 3 or I'll ping Satan to banish your soul to the lowest pits of hell.")
+        else:
+            await ctx.send("Don't mind this command it's just for a special server I'm in. Have a nice day.")
 
     @commands.command(description = "Changes the prefix incase muscle memory makes you miss the right keys.")
     @commands.has_permissions(administrator = True)
@@ -279,19 +286,17 @@ class Utility(commands.Cog):
 
                 message = await self.bot.wait_for('message', check= check2, timeout=60)
                 try:
-                    data2 = {}
-                    with open("times.json", "r") as f:
-                        data = json.load(f)
-                        data[ctx.author.id] = EastTimeDict[message.content]
-                        data2 = data
-                    with open("times.json", "w") as f:
-                        json.dump(data2, f)
+                    data2 = self.bot.col.find_one({"_id": "Times"})
+                    if ctx.author.id in data2:
+                        if data2 is None:
+                            data2 = {"_id": "Times", ctx.author.id : EastTimeDict[message.content]}
+                            self.bot.col.insert(data2)
+                        else:
+                            data2[ctx.author.id] = EastTimeDict[message.content]
+                            self.bot.col.find_and_update({"_id": "Times"}, data2)
                     await ctx.send("Time Zone updated successfully!! Click the clock reaction below any time to see the same time in your time zone.")
                 except asyncio.TimeoutError:
                     await ctx.send("Timeout! Try again you slow mortals!")
-
-
-
 
             elif str(reaction.emoji) == "2️⃣":
                 embedTime.clear_fields()
@@ -305,16 +310,69 @@ class Utility(commands.Cog):
 
                 message = await self.bot.wait_for('message', check= check3, timeout=60)
                 try:
-                    data2 = {}
-                    with open("times.json", "r") as f:
-                        data = json.load(f)
-                        data[ctx.author.id] = WestTimeDict[message.content]
-                        data2 = data
-                    with open("times.json", "w") as f:
-                        json.dump(data2, f)
+                    data2 = self.bot.col.find_one({"_id": "Times"})
+                    if ctx.author.id in data2:
+                        if data2 is None:
+                            data2 = {"_id": "Times", ctx.author.id : WestTimeDict[message.content]}
+                            self.bot.col.insert(data2)
+                        else:
+                            data2[ctx.author.id] = WestTimeDict[message.content]
+                            self.bot.col.find_and_update({"_id": "Times"}, data2)
                     await ctx.send("Time Zone updated successfully!! Click the clock reaction below any time to see the same time in your time zone.")
                 except TimeoutError:
                     await ctx.send("Timeout! Try again you slow mortals!")
+
+    @commands.command(
+        description = "Adds a new role to the guild to be used for a specific time period."
+    )
+    @commands.has_permissions(manage_roles = True)
+    async def event(self, ctx, *, rolename):
+        try:
+            role = await ctx.guild.create_role(name= rolename, mentionable = True)
+        except discord.HTTPException as e:
+            await ctx.send("Failed at role creation")
+            print (e)
+        message = await ctx.send(f"Role {role.mention} has been created for an event! Make sure to react to this message with a ✅ to get the event role!")
+        await message.add_reaction(emoji = "✅")
+        data = self.bot.col.find_one({"_id": "server_configs"})
+        if "Events" in data[str(ctx.guild.id)]:
+            data[str(ctx.guild.id)]["Events"].append(rolename)
+        else:
+            data[str(ctx.guild.id)]["Events"] = [rolename]
+        self.bot.col.find_and_modify({"_id": "server_configs"}, data)
+
+        def checkf(reaction, user):
+            return str(reaction.emoji) == "✅" and not(user.bot)
+        while True:
+            reaction, user = await self.bot.wait_for("reaction_add", check = checkf)
+
+            await user.add_roles(role)
+            await message.remove_reaction(reaction, user)
+    
+    @event.error
+    async def eventError(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You don't have the authority of event manager to manage events! Be careful or next time you don't get to participate in the event at all.")
+
+    @commands.command(
+        description= "A command to end the already running events in the Server."
+    )
+    @commands.has_permissions(manage_roles = True)
+    async def endevent(self, ctx, *, rolename):
+        role = discord.utils.get(ctx.guild.roles, name = rolename)
+        if role:
+            await role.delete()
+            data = self.bot.col.find_one({"_id": "server_configs"})
+            data[str(ctx.guild.id)]["Events"].remove(rolename)
+            self.bot.col.find_and_modify({"_id": "server_configs"}, data)
+            await ctx.send(f"Event {rolename} has now ended! The role will no longer be in use.")
+        else:
+            await ctx.send("This event wasn't found! Check again to see if it is the same event.")
+
+    @endevent.error
+    async def eeError(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("Only Event Managers can handle time when an event stays! Do not interfere!")
 
 def setup(bot):
     bot.add_cog(Utility(bot))

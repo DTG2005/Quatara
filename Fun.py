@@ -1,3 +1,5 @@
+from discord.colour import Color
+from os import name
 import discord
 import random
 
@@ -45,5 +47,16 @@ class Fun(commands.Cog):
 #        Sendembed.set_author(name = ctx.author.name, icon_url = ctx.author.avatar_url)
         Sendembed.add_field(name= f"Question: {question}", value = f"Answer: {answer}")
         await ctx.send(embed= Sendembed)
+
+    @commands.command(
+        description = "Rolls a dice that is too nice. Give a number to roll out of a total of it, or skip the number to roll from a default of six",
+        aliases = ["dice", "die"]
+    )
+    async def roll(self, ctx, number : int = 6):
+        embed1 = discord.Embed(title= "Dice Roll", description= f"Rolled out of {number}", color= discord.Color(0x350cf9))
+        embed1.add_field(name= "And your number is!", value= str(random.randint(1, number)))
+#        embed1.set_author(name= ctx.author.name, icon_url= ctx.author.avatar_url)
+        await ctx.send(embed= embed1)
+
 def setup(bot):
     bot.add_cog(Fun(bot))
