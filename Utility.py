@@ -130,9 +130,8 @@ class Utility(commands.Cog):
                         timeDat = []
                         am_pm = message.content.split()[message.content.split().index(word) + 1]
                         try:
-                            with open("times.json", "r") as f:
-                                data = json.load(f)
-                                timeDat = data[str(message.author.id)]
+                            data = self.bot.col.find_one({"_id": "Times"})
+                            timeDat = data[str(message.author.id)]
     
                             GMT_Hrs = int(word.split(":")[0]) - int(timeDat[0])
                             GMT_mins = int(word.split(":")[1])
@@ -162,9 +161,8 @@ class Utility(commands.Cog):
                                     am_pm = "pm"
                             
                             timeDat1 = []
-                            with open("times.json", "r") as f:
-                                data = json.load(f)
-                                timeDat1 = data[str(user.id)]
+                            data2 = self.bot.col.find_one({"_id": "Times"})
+                            timeDat1 = data2[str(user.id)]
     
                             GMT_Hrs += int(timeDat1[0])
                             GMT_mins += int(word.split(":")[1])
@@ -193,7 +191,7 @@ class Utility(commands.Cog):
                                 else:
                                     am_pm = "pm"
     
-                            Time_Complete = f"{GMT_Hrs}:{GMT_mins} {am_pm}"
+                            Time_Complete = f"{GMT_Hrs:02d}:{GMT_mins:02d} {am_pm}"
     
                             channel = await user.create_dm()
                             await channel.send(Time_Complete)
@@ -287,13 +285,15 @@ class Utility(commands.Cog):
                 message = await self.bot.wait_for('message', check= check2, timeout=60)
                 try:
                     data2 = self.bot.col.find_one({"_id": "Times"})
-                    if ctx.author.id in data2:
-                        if data2 is None:
-                            data2 = {"_id": "Times", ctx.author.id : EastTimeDict[message.content]}
-                            self.bot.col.insert(data2)
-                        else:
-                            data2[ctx.author.id] = EastTimeDict[message.content]
-                            self.bot.col.find_and_update({"_id": "Times"}, data2)
+                    if data2 is None:
+                        data2 = {"_id": "Times", str(ctx.author.id) : EastTimeDict[message.content]}
+                        self.bot.col.insert(data2)
+                    elif str(ctx.author.id) in data2:
+                        data2[str(ctx.author.id)] = EastTimeDict[message.content]
+                        self.bot.col.find_and_modify({"_id": "Times"},data2)
+                    else:
+                        data2[str(ctx.author.id)] = EastTimeDict[message.content]
+                        self.bot.col.find_and_modify({"_id": "Times"}, data2)
                     await ctx.send("Time Zone updated successfully!! Click the clock reaction below any time to see the same time in your time zone.")
                 except asyncio.TimeoutError:
                     await ctx.send("Timeout! Try again you slow mortals!")
@@ -311,13 +311,15 @@ class Utility(commands.Cog):
                 message = await self.bot.wait_for('message', check= check3, timeout=60)
                 try:
                     data2 = self.bot.col.find_one({"_id": "Times"})
-                    if ctx.author.id in data2:
-                        if data2 is None:
-                            data2 = {"_id": "Times", ctx.author.id : WestTimeDict[message.content]}
-                            self.bot.col.insert(data2)
-                        else:
-                            data2[ctx.author.id] = WestTimeDict[message.content]
-                            self.bot.col.find_and_update({"_id": "Times"}, data2)
+                    if data2 is None:
+                        data2 = {"_id": "Times", str(ctx.author.id): WestTimeDict[message.content]}
+                        self.bot.col.insert(data2)
+                    elif str(ctx.author.id) in data2:
+                        data2[str(ctx.author.id)] = WestTimeDict[message.content]
+                        self.bot.col.find_and_modify({"_id": "Times"}, data2)
+                    else:
+                        data2[str(ctx.author.id)] = WestTimeDict[message.content]
+                        self.bot.col.find_and_modify({"_id": "Times"}, data2)
                     await ctx.send("Time Zone updated successfully!! Click the clock reaction below any time to see the same time in your time zone.")
                 except TimeoutError:
                     await ctx.send("Timeout! Try again you slow mortals!")
