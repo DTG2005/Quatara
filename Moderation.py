@@ -1,9 +1,18 @@
+from discord.errors import Forbidden, HTTPException
 import discord
 from discord.ext import commands
 from discord.ext import tasks
 import json
 
 from discord.ext.commands.core import command
+
+def Update(cpage, cdict, tpage):
+    key = cdict.keys()
+    cpagekey = list(key)[cpage-1]
+    updEmbed = discord.Embed(title=cpagekey, description=f"Displaying the {cpagekey} now.")
+    for user in cdict[cpagekey]:
+        updEmbed.add_field(name=f"Case {list(cdict[cpagekey].keys()).index(user) + 1}", value= f"<@{int(user)}: {cdict[cpagekey][user]}>")
+    return updEmbed
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
@@ -47,6 +56,14 @@ class Moderation(commands.Cog):
         await member.kick(reason= reason)
         await ctx.send(f"{member.name} has been kicked for {reason}. All hail Da YEETs!!!")
         await member.send(f"Thou hast been kicked, pestilence, for {reason}.")
+        config = self.bot.col.find_one({"_id": "server_configs"})
+        try:
+            commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
+            embed = discord.Embed(title= "Kick case administered", description= f"<@{member.id}> was kicked by <@{ctx.author.id}> for {reason}")
+            embed.set_footer(text=f"Kick command recorded in {ctx.channel.name}")
+            await commandlog.send(embed = embed)
+        except:
+            pass
 
     #If the user doesn't have the permission, we display this message
     @kick.error
@@ -64,10 +81,35 @@ class Moderation(commands.Cog):
         await ctx.send("The pestilence has been Banned. All hail YEET GOD.")
         await member.send(f"Hey punk, by the grace of the Yeet GOD, you have been banned for {reason}.")
 
+        config = self.bot.col.find_one({"_id": "server_configs"})
+        try:
+            commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
+            embed = discord.Embed(title= "Ban case administered", description= f"<@{member.id}> was banned by <@{ctx.author.id}> for {reason}")
+            embed.set_footer(text=f"Ban command recorded in {ctx.channel.name}")
+            await commandlog.send(embed = embed)
+        except:
+            pass
+
     @ban.error
     async def banerror(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("Hey mods! We have an imposter tryna ban someone without thy permissions. Do with him as thou wisheth.")
+
+    #Unban command to not indulge in the manual hassle of unbanning
+    @commands.command(
+        description = "Unbans reformed exiles who have redeemed themselves. Do remember, don't hesitate to ban again if you must.",
+        aliases = ["unyeet"]
+    )
+    @commands.has_permissions(ban_members = True)
+    async def unban(self, ctx, memberID, reason):
+        member = await self.bot.fetch_user(memberID)
+        await ctx.guild.unban(member, reason= reason)
+        await ctx.send(f"Member Unbanned!!!! All hail {ctx.guild.name}")
+
+    @unban.error
+    async def ubanerror(self,ctx,error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You do not have the supreme power to unyeet the yeeted! Begone before I yeet you as well.")
 
     #repeat the same thing for clean command as well so yep
     @commands.command(description = "Clears the given set of commands so you don't have to dirty your hands.", aliases = ["clean", "tidy", "purge"])
@@ -94,7 +136,14 @@ class Moderation(commands.Cog):
             await user.remove_roles(Role, reason= reason)
             await user.add_roles(muteRole, reason= reason)
             await ctx.send(f"{user.name} has been muted for {reason}!!! All hail {ctx.guild.name}!!!")
-        else:
+            config = self.bot.col.find_one({"_id": "server_configs"})
+            try:
+                commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
+                embed = discord.Embed(title= "Mute case administered", description= f"<@{user.id}> was muted by <@{ctx.author.id}> for {reason}")
+                embed.set_footer(text=f"Mute command recorded in {ctx.channel.name}")
+                await commandlog.send(embed = embed)
+            except:
+                pass
             await ctx.send("You have not configured either the member or the muted role. Configure both to be able to mute members.")
 
     @mute.error
@@ -116,6 +165,14 @@ class Moderation(commands.Cog):
             await user.remove_roles(muteRole, reason= reason)
             await user.add_roles(Role, reason= reason)
             await ctx.send(f"{user.name} has been unmuted for {reason}!!! All hail {ctx.guild.name}!!!")
+            config = self.bot.col.find_one({"_id": "server_configs"})
+            try:
+                commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
+                embed = discord.Embed(title= "Unmute case administered", description= f"<@{user.id}> was unmuted by <@{ctx.author.id}> for {reason}")
+                embed.set_footer(text=f"Unmute command recorded in {ctx.channel.name}")
+                await commandlog.send(embed = embed)
+            except:
+                pass
         else:
             await ctx.send("You have not configured either the member or the muted role. Configure both to be able to mute members.")
 
@@ -145,6 +202,14 @@ class Moderation(commands.Cog):
                     await user.add_roles(muteRole, reason= reason)
                     warns.pop(str(user.id))
                     await ctx.send(f"{user.name} has been muted over accumulation of 3 warnings. The current reason for warning was {reason}!!! All hail Satan!!!")
+                    config = self.bot.col.find_one({"_id": "server_configs"})
+                    try:
+                        commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
+                        embed = discord.Embed(title= "Warn/Mute case administered", description= f"<@{user.id}> was muted by warning by <@{ctx.author.id}> for {reason}")
+                        embed.set_footer(text=f"Warn command recorded in {ctx.channel.name}")
+                        await commandlog.send(embed = embed)
+                    except:
+                        pass
                 else:
                     await ctx.send("Cannot warn further, muted role has not been set up. What kind of moderation do you think I'd do if you don't give me the roles, dummy.")
                 data[str(ctx.guild.id)]["Warns"] = warns
@@ -157,11 +222,29 @@ class Moderation(commands.Cog):
                 data[str(ctx.guild.id)]["Warns"] = warns
                 await ctx.send(f"{user.name} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = 1.")
                 self.bot.col.find_and_modify({"_id": "warns"}, data)
+                config = self.bot.col.find_one({"_id": "server_configs"})
+                try:
+                    commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
+                    embed = discord.Embed(title= "Warn case administered", description= f"<@{user.id}> was warned by <@{ctx.author.id}> for {reason}")
+                    embed.set_footer(text=f"Warn command recorded in {ctx.channel.name}")
+                    await commandlog.send(embed = embed)
+                except:
+                    pass
+
         else:
             await ctx.send(f"{user.mention} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = 2.")
             warns[str(user.id)] = 1
             data[str(ctx.guild.id)]["Warns"] = warns
             self.bot.col.find_and_modify({"_id": "warns"}, data)
+            config = self.bot.col.find_one({"_id": "server_configs"})
+            try:
+                commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
+                embed = discord.Embed(title= "Warn case administered", description= f"<@{user.id}> was warned by <@{ctx.author.id}> for {reason}")
+                embed.set_footer(text=f"Warn command recorded in {ctx.channel.name}")
+                await commandlog.send(embed = embed)
+            except:
+                pass
+
 
 
     @warn.error
@@ -185,6 +268,14 @@ class Moderation(commands.Cog):
                     superwarns.pop(str(user.id))
                     data[str(ctx.guild.id)]["Superwarns"] = superwarns
                     self.bot.col.find_and_modify({"_id": "warns"}, data)
+                    config = self.bot.col.find_one({"_id": "server_configs"})
+                    try:
+                        commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
+                        embed = discord.Embed(title= "Superwarn/Kick case administered", description= f"<@{user.id}> was kicked by superwarning by <@{ctx.author.id}> for {reason}")
+                        embed.set_footer(text=f"Superwarn command recorded in {ctx.channel.name}")
+                        await commandlog.send(embed = embed)
+                    except:
+                        pass
                 else:
                     superwarns[str(user.id)] += 1
                     data[str(ctx.guild.id)]["Superwarns"] = superwarns
@@ -195,11 +286,27 @@ class Moderation(commands.Cog):
                 data[str(ctx.guild.id)]["Superwarns"] = superwarns
                 await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = 2.")
                 self.bot.col.find_and_modify({"_id": "warns"}, data)
+                config = self.bot.col.find_one({"_id": "server_configs"})
+                try:
+                    commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
+                    embed = discord.Embed(title= "Superwarn case administered", description= f"<@{user.id}> was superwarned by <@{ctx.author.id}> for {reason}")
+                    embed.set_footer(text=f"Superwarn command recorded in {ctx.channel.name}")
+                    await commandlog.send(embed = embed)
+                except:
+                    pass
         else:
             superwarns[str(user.id)] = 1
             data[str(ctx.guild.id)]["Superwarns"] = superwarns
             await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = 2.")
             self.bot.col.find_and_modify({"_id": "warns"}, data)
+            config = self.bot.col.find_one({"_id": "server_configs"})
+            try:
+                commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
+                embed = discord.Embed(title= "Superwarn case administered", description= f"<@{user.id}> was superwarned by <@{ctx.author.id}> for {reason}")
+                embed.set_footer(text=f"Superwarn command recorded in {ctx.channel.name}")
+                await commandlog.send(embed = embed)
+            except:
+                pass
             
     @superwarn.error
     async def superwarnError(self, ctx, error):
@@ -210,13 +317,9 @@ class Moderation(commands.Cog):
     @commands.command(description = "Clears the warnings from a redeemed soul. Good work, boi!")
     @commands.has_permissions(kick_members = True)
     async def forgive(self, ctx, user : discord.Member):
-        warns = {}
-        superwarns = {}
         data = self.bot.col.find_one({"_id": "warns"})
         warns = data[str(ctx.guild.id)]["Warns"]
         superwarns = data[str(ctx.guild.id)]["Superwarns"]
-        await ctx.send(warns)
-        await ctx.send(superwarns)
         if str(user.id) in warns and str(user.id) in superwarns:
             warns.pop(str(user.id))
             superwarns.pop(str(user.id))
@@ -224,16 +327,40 @@ class Moderation(commands.Cog):
             data[str(ctx.guild.id)]["Warns"] = warns
             data[str(ctx.guild.id)]["Superwarns"] = superwarns
             self.bot.col.find_and_modify({"_id": "warns"}, data)
+            config = self.bot.col.find_one({"_id": "server_configs"})
+            try:
+                commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
+                embed = discord.Embed(title= "Forgive case administered", description= f"<@{user.id}> was forgived by <@{ctx.author.id}>.")
+                embed.set_footer(text=f"Forgive command recorded in {ctx.channel.name}")
+                await commandlog.send(embed = embed)
+            except:
+                pass
         elif str(user.id) in warns:
             warns.pop(str(user.id))
             await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
             data[str(ctx.guild.id)]["Warns"] = warns
             self.bot.col.find_and_modify({"_id": "warns"}, data)
+            config = self.bot.col.find_one({"_id": "server_configs"})
+            try:
+                commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
+                embed = discord.Embed(title= "Forgive case administered", description= f"<@{user.id}> was forgived by <@{ctx.author.id}>.")
+                embed.set_footer(text=f"Forgive command recorded in {ctx.channel.name}")
+                await commandlog.send(embed = embed)
+            except:
+                pass
         elif str(user.id) in superwarns:
             superwarns.pop(str(user.id))
             await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
             data[str(ctx.guild.id)]["Superwarns"]
             self.bot.col.find_and_modify({"_id": "warns"}, data)
+            config = self.bot.col.find_one({"_id": "server_configs"})
+            try:
+                commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
+                embed = discord.Embed(title= "Forgive case administered", description= f"<@{user.id}> was forgived by <@{ctx.author.id}>.")
+                embed.set_footer(text=f"Forgive command recorded in {ctx.channel.name}")
+                await commandlog.send(embed = embed)
+            except:
+                pass
         else:
             await ctx.send("We can't find any warns for our good boi. I don't think they've sinned before, mind checking your records?")
 
@@ -253,9 +380,9 @@ class Moderation(commands.Cog):
             await ctx.send("This channel already exists in our spam list.")
         else:
             data[str(ctx.guild.id)]["Spam Ignore"].append(channel.id)
-            self.bot.col.find_and_modify({"_id": "server_configs"})
+            self.bot.col.find_and_modify({"_id": "server_configs"}, data)
             
-            await ctx.send(f"Spam channel has been added to our list. We shall ping the moderators on spams in {channel.name} from now on.")
+            await ctx.send(f"Spam channel has been added to our list. We shall  not ping the moderators on spams in {channel.name} from now on.")
 
     @addspam.error
     async def addspamError(self, ctx, error):
@@ -269,7 +396,6 @@ class Moderation(commands.Cog):
         spam_channels =  []
         data = dict(self.bot.col.find_one({"_id": "server_configs"}))
         spam_channels = data[str(ctx.guild.id)]["Spam Ignore"]
-        await ctx.send(spam_channels)
         if channel.id in spam_channels:
             data[str(ctx.guild.id)]["Spam Ignore"].remove(channel.id)
             self.bot.col.find_and_modify({"_id": "server_configs"}, data)
@@ -354,5 +480,46 @@ class Moderation(commands.Cog):
       if isinstance(error, commands.MissingPermissions):
         await ctx.send("You are not authorised to decide who gets what role. Begone!")
 
+    #A display command to display the Warnings and Superwarnings in the server
+    @commands.command(
+        description = "A moderator only command which enables you to view the warns and superwarns of the members in your server. A quick peek is always cool, y'know.",
+        aliases = ["viewwarns", "warns"]
+    )
+    async def displaywarns(self, ctx):
+        data = self.bot.col.find_one({"_id": "warns"})
+        Warns = data[str(ctx.guild.id)]
+        if Warns["Warns"].__len__() == 0 and Warns["Superwarns"].__len__() == 0:
+            await ctx.send("No data to show, nobody has warns or superwarns in your server!")
+        else:
+            totalPages = 2
+            currentPage = 1
+            message = await ctx.send(embed= Update(currentPage, Warns, totalPages))
+
+            #Here we control the page configuration by adding emotes for reaction that can be detected by bot to change the page.
+            await message.add_reaction("◀️")
+            await message.add_reaction("▶️")
+
+            #This is the check function, which is passed to ensure the user is the same as the one who asked for help, and the reaction is among the emojis specified
+            def check(reaction, user):
+                return user == ctx.author and str(reaction.emoji) in ["◀️", "▶️"]
+
+            while True:
+                #We wait for a reaction from the user
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=3000, check=check)
+
+                #Check if the emoji is the forward one and current page is not the last, we go onto the next page
+                if str(reaction.emoji) == "▶️" and currentPage != totalPages:
+                    currentPage += 1
+                    await message.edit(embed= Update(currentPage, Warns, totalPages))
+                    await message.remove_reaction(reaction, user)
+                #Check if the emoji is the backward one and current page is not the first, we go onto the previous page
+                elif str(reaction.emoji) == "◀️" and currentPage > 1:
+                    currentPage -= 1
+                    await message.edit(embed= Update(currentPage, Warns, totalPages))
+                    await message.remove_reaction(reaction, user)
+                #Otherwise
+                else:
+                    await message.remove_reaction(reaction, user)
+                
 def setup(bot):
     bot.add_cog(Moderation(bot))

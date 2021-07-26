@@ -1,6 +1,7 @@
 from discord.colour import Color
 from os import name
 import discord
+import asyncio
 import random
 
 from discord.ext import commands
@@ -58,5 +59,36 @@ class Fun(commands.Cog):
 #        embed1.set_author(name= ctx.author.name, icon_url= ctx.author.avatar_url)
         await ctx.send(embed= embed1)
 
+    @commands.command(
+        description = "Predicts an answer from a given number of options. After all it's not always in binary.",
+        aliases = ["multiple", "multipredict"]
+    )
+    async def mcqpredict(self, ctx, *, question):
+        await ctx.send("Question recorded, please list the options or say 'done' to end the prompt.")
+        def check(message):
+            return message.author.id == ctx.author.id
+
+        options = []
+        while True:
+            try:
+                message = await self.bot.wait_for('message', timeout = 60.0, check= check)
+            except asyncio.TimeoutError:
+                await ctx.send("Timeout! Try the prediction again.")
+                break
+            else:
+                if message.content == "done":
+                    if options:
+                        break
+                    else:
+                        await ctx.send("I am not intelligent enough to choose from nothingness. Give me options.")
+                else:
+                    options.append(message.content)
+                    await message.add_reaction("👍")
+        answer = random.choice(options)
+        embed1 = discord.Embed(title= "Multiple Choice Prediction", description=f"And the answer is {answer}", color= discord.Color(0x350cf9)) 
+        for value in options:
+            embed1.add_field(name= f"Option {options.index(value) + 1}", value=value)
+        await ctx.send(embed=embed1)
+                
 def setup(bot):
     bot.add_cog(Fun(bot))

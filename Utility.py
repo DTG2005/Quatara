@@ -165,7 +165,6 @@ class Utility(commands.Cog):
                             timeDat1 = data2[str(user.id)]
     
                             GMT_Hrs += int(timeDat1[0])
-                            GMT_mins += int(word.split(":")[1])
                             if timeDat1[1]:
                                 if int(timeDat1[0]) < 0 or timeDat1[0] == "-0":
                                     GMT_mins - 30 
@@ -226,7 +225,7 @@ class Utility(commands.Cog):
         else:
             await ctx.send("Don't mind this command it's just for a special server I'm in. Have a nice day.")
 
-    @commands.command(description = "Changes the prefix incase muscle memory makes you miss the right keys.")
+    @commands.command(description = "Changes the prefix incase muscle memory makes you miss the right keys.", aliases = ["setprefix"])
     @commands.has_permissions(administrator = True)
     async def changeprefix(self, ctx, prefix):
         prefixes = self.bot.col.find_one({"_id": "Prefixes"})
@@ -248,11 +247,19 @@ class Utility(commands.Cog):
 #        await ctx.send("The reaction role setup is up. What channel do you want the reaction role in?")
 #
 #        def check(m):
-#            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id and m.content in m.guild.text_channels
+#            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
 #
-#        await self.bot.wait_for('message', check = check, timeout = 30)
+#        channelM = await self.bot.wait_for('message', check = check, timeout = 30)
 #        try:
-#            await ctx.send("Channel registered.")
+#            try:
+#                channel = channelM.raw_channel_mentions[0]
+#                await ctx.send("Channel registered. What must be the body of the message?")
+#                try:
+#                    message = await self.bot.wait_for("message", timeout = 60, check= check)
+#                except asyncio.TimeoutError:
+#                    await ctx.send("Timeout! Restart the setup to finish the reaction role.")
+#            except:
+#                await ctx.send("Channel not detected in the message. Restart the prompt.")
 #        except asyncio.TimeoutError:
 #            await ctx.send("Timeout. Restart the setup to finish the reaction role.")
 
