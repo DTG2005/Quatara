@@ -1,5 +1,6 @@
 import discord
 import asyncio
+from discord import user
 from discord.ext import commands
 from datetime import datetime
 
@@ -21,6 +22,7 @@ class Logging(commands.Cog):
         log_channel = self.bot.get_channel(self.getLog(message.guild.id))
         embed = discord.Embed(title = f"{message.author.name} deleted a message, heads up!!!", description = "", color = discord.Color.red())
         embed.add_field(name= message.content, value= f"Logged in <#{log_channel.id}>")
+        embed.set_author(name=message.author.name, icon_url=  message.author.icon_url)
         embed.set_footer(text =dt_string)
         await log_channel.send(embed=embed)
 
@@ -30,6 +32,7 @@ class Logging(commands.Cog):
         embed = discord.Embed(title = f"{messageOrig.author.name} edited a message, heads up!!!", description = "", color = discord.Color.orange())
         embed.add_field(name= messageOrig.content, value= "The message before the edit.")
         embed.add_field(name= messageEdit.content, value= "The message after being edited.")
+        embed.set_author(name= messageEdit.author.name, icon_url= messageEdit.author.avatar_url)
         channel = self.bot.get_channel(self.getLog(messageOrig.guild.id))
         embed.set_footer(text =dt_string)
         await channel.send(embed = embed)
@@ -41,7 +44,7 @@ class Logging(commands.Cog):
         returnId = dic[str(member.guild.id)]["door"]
         door_channel = self.bot.get_channel(returnId)
         embed = discord.Embed(title = "Member joined!!!!", description =member.name,color = discord.Color.green())
-#        embed.set_author(name= member.name, icon_url=member.avatar_url)
+        embed.set_author(name= member.name, icon_url=member.avatar_url)
         await door_channel.send(embed = embed)
         try:
             welcome_channel = self.bot.get_channel(dic[str(member.guild.id)]["welcome_config"]["channel"])
@@ -65,22 +68,19 @@ class Logging(commands.Cog):
         returnId = dic[str(member.guild.id)]["door"]
         door_channel = self.bot.get_channel(returnId)
         embed = discord.Embed(title = "Member left!!!!", description = member.name,color = discord.Color.red())
-#        embed.set_author(name= member.name, icon_url=member.avatar_url)
+        embed.set_author(name= member.name, icon_url=member.avatar_url)
         await door_channel.send(embed = embed)
+        goodbye_channel = self.bot.get_channel(dic[str(member.guild.id)]["welcome_config"]["channel"])
+        goodbye_str = dic[str(member.guild.id)]["welcome_config"]['goodbye']
         try:
-            goodbye_channel = self.bot.get_channel(dic[str(member.guild.id)]["welcome_config"]["channel"])
-            goodbye_str = dic[str(member.guild.id)]["welcome_config"]['goodbye']
-            try:
-                goodbye_str =goodbye_str.replace("{member.mention}", f"<@{member.id}>")
-            except:
-                pass
-            try:
-                goodbye_str = goodbye_str.replace("{member.name}", f"{member.name}")
-            except:
-                pass
-            await goodbye_channel.send(goodbye_str)
+            goodbye_str =goodbye_str.replace("{member.mention}", f"<@{member.id}>")
         except:
             pass
+        try:
+            goodbye_str = goodbye_str.replace("{member.name}", f"{member.name}")
+        except:
+            pass
+        await goodbye_channel.send(goodbye_str)
 
     #logging for member updates
     @commands.Cog.listener()
@@ -107,6 +107,34 @@ class Logging(commands.Cog):
             dic = self.bot.col.find_one({"_id": "server_configs"})
             log_channel = self.bot.get_channel(dic[str(guild.id)]["log"])
             await log_channel.send(embed= embed1)
+
+    #logging for when a member updates their guild attributes
+    @commands.Cog.listener()
+    async def on_member_update(self, userb4, useraft):
+        changeTitleDict = {"nick": "Heads Up!! Nickname changed!!!!", "r": "Heads Up!!! Roles updated for a user!"}
+        changetype = None
+        if userb4.nick != useraft.nick:
+            changetype = "nick"
+        elif userb4.roles != useraft.roles:
+            changetype = "r"
+
+        embed = discord.Embed(title = changeTitleDict[changetype], color = discord.Color.green())
+        embed.set_author(name= useraft.name, icon_url=useraft.avatar_url)
+        if changetype == "nick":
+            embed.add_field(name = "Nickname before:", value= userb4.nick)
+            embed.add_field(name="Nickname after:", value= useraft.nick)
+        elif changetype == "r":
+            textb4 = ""
+            for roles in userb4.roles:
+                textb4 += (roles.mention + ", ")
+            textaft = ""
+            for roles in useraft.roles:
+                textaft += (roles.mention + ", ")
+            embed.add_field(name = "Roles before:", value= textb4)
+            embed.add_field(name = "Roles after:", value= textaft)
+        dic = self.bot.col.find_one({"_id": "server_configs"})
+        log_channel = self.bot.get_channel(dic[str(useraft.guild.id)]["log"])
+        await log_channel.send(embed= embed)
 
     #A command for setting the logging channel to be a different one
     @commands.command(description = "Changes the log channel to be a different one for a more QOL channel to be set separately.")

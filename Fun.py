@@ -1,8 +1,11 @@
+from discord.enums import NotificationLevel
 from discord.colour import Color
 from os import name
 import discord
 import asyncio
 import random
+from PIL import Image
+from io import BytesIO
 
 from discord.ext import commands
 
@@ -66,7 +69,7 @@ class Fun(commands.Cog):
     async def mcqpredict(self, ctx, *, question):
         await ctx.send("Question recorded, please list the options or say 'done' to end the prompt.")
         def check(message):
-            return message.author.id == ctx.author.id
+            return message.author.id == ctx.author.id and message.channel.id == ctx.channel.id
 
         options = []
         while True:
@@ -89,6 +92,52 @@ class Fun(commands.Cog):
         for value in options:
             embed1.add_field(name= f"Option {options.index(value) + 1}", value=value)
         await ctx.send(embed=embed1)
+
+    @commands.command(
+        description = "Makes someone a professional retard. I mean, they already are, just gotta expose their dumbassery, after all.",
+        aliases = ["dumb"]
+    )
+    async def retard(self, ctx, member : discord.Member = None):
+        if member == None:
+            member = ctx.author
+        
+        retard = Image.open("Images/retard.jpg")
+        asset = member.avatar_url_as(size = 128)
+        data = BytesIO(await asset.read())
+
+        pfp = Image.open(data)
+        pfp.resize((165, 165))
+
+        retard.paste(pfp, (67, 11))
+        retard.save("Images/Profiles/profile.jpg")
+        await ctx.send(file = discord.File("Images/Profiles/profile.jpg"))
+
+    @commands.command(
+        description = "Yeets a disgrace off into the void. YEEEEEEEEEEEEEEEEEEET!!!",
+        aliases = ["YEEEET"]
+    )
+    async def yeetimg(self, ctx, user: discord.Member):
+        try:
+            asset = user.avatar_url_as(size = 128)
+        except:
+            await ctx.send("I need a second person to yeet, dummy. Try again cautiously or I'll yeet you.")
+        data = BytesIO(await asset.read())
+        asset2 = ctx.author.avatar_url_as(size = 128)
+        data2 = BytesIO(await asset2.read())
+        pfp2 = Image.open(data2)
+
+        YEET = Image.open("Images/Yeet.jpg")
+        pfp = Image.open(data)
+        YEET.paste(pfp.resize((60, 60)), (180, 46))
+        YEET.paste(pfp2.resize((60,60)), (229, 117))
+        YEET.paste(pfp.resize((60, 60)), (129, 343))
+        YEET.paste(pfp2.resize((60,60)), (69, 322))
+        YEET.paste(pfp.resize((60, 60)), (240, 288))
+        YEET.paste(pfp2.resize((60,60)), (396, 364))
+
+        YEET.save("Images/Profiles/profile2.jpg")
+        await ctx.send(file= discord.File("Images/Profiles/profile2.jpg"))
+
                 
 def setup(bot):
     bot.add_cog(Fun(bot))

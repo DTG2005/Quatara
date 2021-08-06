@@ -11,7 +11,7 @@ def Update(cpage, cdict, tpage):
     cpagekey = list(key)[cpage-1]
     updEmbed = discord.Embed(title=cpagekey, description=f"Displaying the {cpagekey} now.")
     for user in cdict[cpagekey]:
-        updEmbed.add_field(name=f"Case {list(cdict[cpagekey].keys()).index(user) + 1}", value= f"<@{int(user)}: {cdict[cpagekey][user]}>")
+        updEmbed.add_field(name=f"Case {list(cdict[cpagekey].keys()).index(user) + 1}", value= f"<@{int(user)}>: {cdict[cpagekey][user]}")
     return updEmbed
 
 class Moderation(commands.Cog):
@@ -27,6 +27,13 @@ class Moderation(commands.Cog):
     #This listener detects spam in the channels except those marked for spam
     @commands.Cog.listener()
     async def on_message(self, message):
+        dic = self.bot.col.find_one({"_id": "server_configs"})
+        words = dic[str(message.guild.id)]["Words"]
+        mod = self.bot.col.find_one({"_id": "role_configs"})[str(message.guild.id)]["Moderator"]
+
+        for word in words:
+            if word in message.content:
+                await message.channel.send(f"Usage of prohibited word detected!!! Pinging <@{mod}> to take action now.")
         spamchannels = []
         Spambool = False
         data = dict(self.bot.col.find_one({"_id": "server_configs"}))
@@ -482,7 +489,7 @@ class Moderation(commands.Cog):
 
     #A display command to display the Warnings and Superwarnings in the server
     @commands.command(
-        description = "A moderator only command which enables you to view the warns and superwarns of the members in your server. A quick peek is always cool, y'know.",
+        description = "A command which enables you to view the warns and superwarns of the members in your server. A quick peek is always cool, y'know.",
         aliases = ["viewwarns", "warns"]
     )
     async def displaywarns(self, ctx):
@@ -520,6 +527,58 @@ class Moderation(commands.Cog):
                 #Otherwise
                 else:
                     await message.remove_reaction(reaction, user)
+
+    #Now a command to add to the moderation of certain special words
+    @commands.command(
+        description = "Adds new keywords to moderate. You don't want those dum dums to spoil the kids after all, do you?",
+    )
+    async def addWord(self, ctx, *, word):
+        dic = self.bot.col.find_one({"_id": "server_configs"})
+        if "Words" not in dic[str(ctx.guild.id)]:
+            words = [word]
+            await ctx.send("The word has now been registered!!! We shall now ping the moderators whenever said word or phrase is detected in chat. ")
+            dic[str(ctx.guild.id)]["Words"] = words
+        else:
+            words = dic[str(ctx.guild.id)]["Words"]
+            if word in words:
+                await ctx.send("The word/phrase already exists in our record!")
+            else:
+                words.append(word)
+                await ctx.send("The word has now been registered!!! We shall now ping the moderators whenever said word or phrase is detected in chat. ")
+                dic[str(ctx.guild.id)]["Words"] = words
+        self.bot.col.find_and_modify({"_id": "server_configs"}, dic)
+        try:
+            commandlog = self.bot.get_channel(dic[str(ctx.guild.id)]["Command Log"])
+            embed = discord.Embed(title= "Word Remove case administered", description= f"<@{ctx.author.id}> has added ||{word}|| to moderated words!!")
+            embed.set_footer(text=f"Remove Word command recorded in {ctx.channel.name}")
+            await commandlog.send(embed = embed)
+        except:
+            pass
+
+    #And now a command to remove said words.
+    @commands.command(
+        description = "Adds new keywords to moderate. You don't want those dum dums to spoil the kids after all, do you?",
+    )
+    async def rmWord(self, ctx, *, word):
+        dic = self.bot.col.find_one({"_id": "server_configs"})
+        if "Words" not in dic[str(ctx.guild.id)]:
+            await ctx.send("Word not found in our record. Mind checking it again?")
+        else:
+            words = dic[str(ctx.guild.id)]["Words"]
+            if word in words:
+                words.remove(word)
+                await ctx.send("The word/phrase has been removed from the record!")
+                dic[str(ctx.guild.id)]["Words"] = words
+            else:
+                await ctx.send("Word not found in our record. Mind checking it again?")
+        self.bot.col.find_and_modify({"_id": "server_configs"}, dic)
+        try:
+            commandlog = self.bot.get_channel(dic[str(ctx.guild.id)]["Command Log"])
+            embed = discord.Embed(title= "Word Remove case administered", description= f"<@{ctx.author.id}> has added ||{word}|| to moderated words!!")
+            embed.set_footer(text=f"Remove Word command recorded in {ctx.channel.name}")
+            await commandlog.send(embed = embed)
+        except:
+            pass
                 
 def setup(bot):
     bot.add_cog(Moderation(bot))
