@@ -29,13 +29,14 @@ class Logging(commands.Cog):
     #logging for messages being edited
     @commands.Cog.listener()
     async def on_message_edit(self, messageOrig, messageEdit):
-        embed = discord.Embed(title = f"{messageOrig.author.name} edited a message, heads up!!!", description = "", color = discord.Color.orange())
-        embed.add_field(name= messageOrig.content, value= "The message before the edit.")
-        embed.add_field(name= messageEdit.content, value= "The message after being edited.")
-        embed.set_author(name= messageEdit.author.name, icon_url= messageEdit.author.avatar_url)
-        channel = self.bot.get_channel(self.getLog(messageOrig.guild.id))
-        embed.set_footer(text =dt_string)
-        await channel.send(embed = embed)
+        if messageOrig.content != messageEdit.content:
+            embed = discord.Embed(title = f"{messageOrig.author.name} edited a message, heads up!!!", description = "", color = discord.Color.orange())
+            embed.add_field(name= messageOrig.content, value= "The message before the edit.")
+            embed.add_field(name= messageEdit.content, value= "The message after being edited.")
+            embed.set_author(name= messageEdit.author.name, icon_url= messageEdit.author.avatar_url)
+            channel = self.bot.get_channel(self.getLog(messageOrig.guild.id))
+            embed.set_footer(text =dt_string)
+            await channel.send(embed = embed)
 
     #logging for member joining
     @commands.Cog.listener()
