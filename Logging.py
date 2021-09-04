@@ -22,9 +22,10 @@ class Logging(commands.Cog):
         log_channel = self.bot.get_channel(self.getLog(message.guild.id))
         embed = discord.Embed(title = f"{message.author.name} deleted a message, heads up!!!", description = "", color = discord.Color.red())
         embed.add_field(name= message.content, value= f"Logged in <#{log_channel.id}>")
-        embed.set_author(name=message.author.name, icon_url=  message.author.icon_url)
+        embed.set_author(name=message.author.name, icon_url=  message.author.avatar.url)
         embed.set_footer(text =dt_string)
         await log_channel.send(embed=embed)
+
 
     #logging for messages being edited
     @commands.Cog.listener()
@@ -33,7 +34,7 @@ class Logging(commands.Cog):
             embed = discord.Embed(title = f"{messageOrig.author.name} edited a message, heads up!!!", description = "", color = discord.Color.orange())
             embed.add_field(name= messageOrig.content, value= "The message before the edit.")
             embed.add_field(name= messageEdit.content, value= "The message after being edited.")
-            embed.set_author(name= messageEdit.author.name, icon_url= messageEdit.author.avatar_url)
+            embed.set_author(name= messageEdit.author.name, icon_url= messageEdit.author.avatar.url)
             channel = self.bot.get_channel(self.getLog(messageOrig.guild.id))
             embed.set_footer(text =dt_string)
             await channel.send(embed = embed)
@@ -45,7 +46,7 @@ class Logging(commands.Cog):
         returnId = dic[str(member.guild.id)]["door"]
         door_channel = self.bot.get_channel(returnId)
         embed = discord.Embed(title = "Member joined!!!!", description =member.name,color = discord.Color.green())
-        embed.set_author(name= member.name, icon_url=member.avatar_url)
+        embed.set_author(name= member.name, icon_url=member.avatar.url)
         await door_channel.send(embed = embed)
         try:
             welcome_channel = self.bot.get_channel(dic[str(member.guild.id)]["welcome_config"]["channel"])
@@ -69,7 +70,7 @@ class Logging(commands.Cog):
         returnId = dic[str(member.guild.id)]["door"]
         door_channel = self.bot.get_channel(returnId)
         embed = discord.Embed(title = "Member left!!!!", description = member.name,color = discord.Color.red())
-        embed.set_author(name= member.name, icon_url=member.avatar_url)
+        embed.set_author(name= member.name, icon_url=member.avatar.url)
         await door_channel.send(embed = embed)
         goodbye_channel = self.bot.get_channel(dic[str(member.guild.id)]["welcome_config"]["channel"])
         goodbye_str = dic[str(member.guild.id)]["welcome_config"]['goodbye']
@@ -96,14 +97,14 @@ class Logging(commands.Cog):
             changetype = "dc"
         embed1 = discord.Embed(title= changeTitleDict[changetype], color= discord.Colour.green())
         if changetype == "av":
-            embed1.set_thumbnail(url = userafter.avatar_url)
+            embed1.set_thumbnail(url = userafter.avatar.url)
         elif changetype == "un":
             embed1.add_field(name= "Before:", value= userb4.name)
             embed1.add_field(name= "After:", value= userafter.name)
         elif changetype == "dc":
             embed1.add_field(name= "Before:", value= userb4.discriminator)
             embed1.add_field(name= "After:", value= userafter.discriminator)
-        embed1.set_author(name= userafter.name, icon_url= userafter.avatar_url)
+        embed1.set_author(name= userafter.name, icon_url= userafter.avatar.url)
         for guild in userafter.mutual_guilds:
             dic = self.bot.col.find_one({"_id": "server_configs"})
             log_channel = self.bot.get_channel(dic[str(guild.id)]["log"])
@@ -120,7 +121,7 @@ class Logging(commands.Cog):
             changetype = "r"
 
         embed = discord.Embed(title = changeTitleDict[changetype], color = discord.Color.green())
-        embed.set_author(name= useraft.name, icon_url=useraft.avatar_url)
+        embed.set_author(name= useraft.name, icon_url=useraft.avatar.url)
         if changetype == "nick":
             embed.add_field(name = "Nickname before:", value= userb4.nick)
             embed.add_field(name="Nickname after:", value= useraft.nick)

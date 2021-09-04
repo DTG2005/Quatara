@@ -4,10 +4,18 @@ from os import name
 import discord
 import asyncio
 import random
-from PIL import Image
+from PIL import Image, ImageDraw, ImageOps
 from io import BytesIO
 
 from discord.ext import commands
+def crop_to_circle(im):
+    size = (145, 145)
+    mask = Image.new('L', size, 0)
+    draw = ImageDraw.Draw(mask) 
+    draw.ellipse((0, 0) + size, fill=255)
+    output = ImageOps.fit(im, mask.size, centering=(0.5, 0.5))
+    output.putalpha(mask)
+    return output
 
 predict_dict = {
     "Good": 
@@ -48,7 +56,7 @@ class Fun(commands.Cog):
         answer = random.choice(predict_dict[choice])
 
         Sendembed = discord.Embed(title= "Prediction", color= colordict[choice])
-#        Sendembed.set_author(name = ctx.author.name, icon_url = ctx.author.avatar_url)
+        Sendembed.set_author(name = ctx.author.name, icon_url = ctx.author.avatar.url)
         Sendembed.add_field(name= f"Question: {question}", value = f"Answer: {answer}")
         await ctx.send(embed= Sendembed)
 
@@ -59,7 +67,7 @@ class Fun(commands.Cog):
     async def roll(self, ctx, number : int = 6):
         embed1 = discord.Embed(title= "Dice Roll", description= f"Rolled out of {number}", color= discord.Color(0x350cf9))
         embed1.add_field(name= "And your number is!", value= str(random.randint(1, number)))
-#        embed1.set_author(name= ctx.author.name, icon_url= ctx.author.avatar_url)
+        embed1.set_author(name= ctx.author.name, icon_url= ctx.author.avatar.url)
         await ctx.send(embed= embed1)
 
     @commands.command(
@@ -102,11 +110,12 @@ class Fun(commands.Cog):
             member = ctx.author
         
         retard = Image.open("Images/retard.jpg")
-        asset = member.avatar_url_as(size = 128)
+        asset = member.avatar.url_as(size = 128)
         data = BytesIO(await asset.read())
 
         pfp = Image.open(data)
         pfp.resize((165, 165))
+        pfp = crop_to_circle(pfp)
 
         retard.paste(pfp, (67, 11))
         retard.save("Images/Profiles/profile.jpg")
@@ -118,11 +127,11 @@ class Fun(commands.Cog):
     )
     async def yeetimg(self, ctx, user: discord.Member):
         try:
-            asset = user.avatar_url_as(size = 128)
+            asset = user.avatar.url_as(size = 128)
         except:
             await ctx.send("I need a second person to yeet, dummy. Try again cautiously or I'll yeet you.")
         data = BytesIO(await asset.read())
-        asset2 = ctx.author.avatar_url_as(size = 128)
+        asset2 = ctx.author.avatar.url_as(size = 128)
         data2 = BytesIO(await asset2.read())
         pfp2 = Image.open(data2)
 
