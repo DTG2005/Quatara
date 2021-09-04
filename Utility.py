@@ -1,5 +1,7 @@
-from discord.shard import EventItem
 import discord
+from discord import ui
+from discord.enums import ButtonStyle
+from discord.errors import DiscordServerError
 from discord.ext import commands, tasks
 import datetime as Dt
 import time
@@ -14,6 +16,80 @@ EastTimeDict = {"1": ["+0", True], "2": [1, False], "3": [1, True], "4": [2, Fal
 
 WestTimeDict = {"1": ["-0", True], "2": [-1, False], "3": [-1, True], "4": [-2, False], "5": [-2, True], "6": [-3, False], "7": [-3, True], "8": [-4, False], "9": [-4, True], "10": [-5, False], "11": [-5, True], "12": [-6, False], "13": [-6, True], "14": [-7, False], "15": [-7, True], "16": [-8, False], "17": [-8, True], "18": [-9, False], "19": [-9, True], "20": [-10, False], "21": [-10, True], "22": [-11, False], "23": [-11, True], "24": [-12, False], }
 
+class RoleButton(discord.ui.Button):
+    def __init__(self, role):
+        super().__init__(label= "Get Role", style= discord.ButtonStyle.green)
+        self.role = role
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.user.add_roles(self.role)
+
+class Timezone1Button(discord.ui.Button):
+    def __init__(self, user, bot):
+        super().__init__(style=discord.ButtonStyle.green, label='Eastern Hemisphere')
+        self.user = user
+        self.bot = bot
+
+    async def callback(self, interaction: discord.Interaction):
+        if self.user == interaction.user:
+            embedTime = discord.Embed(title= "Time Zone selector", description= "Update your time to be able to convert time from others' times to yours.")
+            embedTime.add_field(name="Time Zones", value= "1. GMT+00:30\n2. GMT+01:00\n3. GMT+01:30\n4. GMT+02:00\n5. GMT+02:30\n6. GMT+03:00\n7. GMT+03:30\n8. GMT+04:00\n9. GMT+04:30\n10. GMT+05:00\n11. GMT+05:30\n12. GMT+06:00\n13. GMT+06:30\n14. GMT+07:00\n15. GMT+07:30\n16. GMT+08:00\n17. GMT+08:30\n18. GMT+09:00\n19. GMT+09:30\n20. GMT+10:00\n21. GMT+10:30\n22. GMT+11:00\n23. GMT+11:30\n24. GMT+12:00")
+            embedTime.set_footer(text = "Send the number next to your timezone")
+            await interaction.response.edit_message(embed = embedTime)
+
+            def check2(message):
+                return message.author.id == interaction.user.id and int(message.content) in list(range(1, 24))
+            message = await self.bot.wait_for('message', check= check2, timeout=60)
+
+            try:
+                data2 = self.bot.col.find_one({"_id": "Times"})
+                if data2 is None:
+                    data2 = {"_id": "Times", str(interaction.user.id) : EastTimeDict[message.content]}
+                    self.bot.col.insert(data2)
+                elif str(interaction.user.id) in data2:
+                    data2[str(interaction.user.id)] = EastTimeDict[message.content]
+                    self.bot.col.find_and_modify({"_id": "Times"},data2)
+                else:
+                    data2[str(interaction.user.id)] = EastTimeDict[message.content]
+                    self.bot.col.find_and_modify({"_id": "Times"}, data2)
+                await interaction.channel.send("Time Zone updated successfully!! Click the clock reaction below any time to see the same time in your time zone.")
+
+            except asyncio.TimeoutError:
+                await interaction.channel.send("Timeout! Try again you slow mortals!")
+
+class Timezone2Button(discord.ui.Button):
+    def __init__(self, user, bot):
+        super().__init__(style=ButtonStyle.green, label= "Western Hemisphere")
+        self.user = user
+        self.bot = bot
+
+    async def callback(self, interaction: discord.Interaction):
+        if self.user == interaction.user:
+            embedTime = discord.Embed(title= "Time Zone selector", description= "Update your time to be able to convert time from others' times to yours.")
+            embedTime.add_field(name="Time Zones", value= "1. GMT-00:30\n2. GMT-01:00\n3. GMT-01:30\n4. GMT-02:00\n5. GMT-02:30\n6. GMT-03:00\n7. GMT-03:30\n8. GMT-04:00\n9. GMT-04:30\n10. GMT-05:00\n11. GMT-05:30\n12. GMT-06:00\n13. GMT-06:30\n14. GMT-07:00\n15. GMT-07:30\n16. GMT-08:00\n17. GMT-08:30\n18. GMT-09:00\n19. GMT-09:30\n20. GMT-10:00\n21. GMT-10:30\n22. GMT-11:00\n23. GMT-11:30\n24. GMT-00:00")
+            embedTime.set_footer(text = "Send the number next to your timezone")
+            await interaction.response.edit_message(embed=embedTime)
+
+            def check3(message):
+                return message.author.id == interaction.user.id and int(message.content) in list(range(1, 24))
+            
+            message = await self.bot.wait_for('message', check= check3, timeout=60)
+            try:
+                data2 = self.bot.col.find_one({"_id": "Times"})
+                if data2 is None:
+                    data2 = {"_id": "Times", str(interaction.user.id): WestTimeDict[message.content]}
+                    self.bot.col.insert(data2)
+                elif str(interaction.user.id) in data2:
+                    data2[str(interaction.user.id)] = WestTimeDict[message.content]
+                    self.bot.col.find_and_modify({"_id": "Times"}, data2)
+                else:
+                    data2[str(interaction.user.id)] = WestTimeDict[message.content]
+                    self.bot.col.find_and_modify({"_id": "Times"}, data2)
+                await interaction.channel.send("Time Zone updated successfully!! Click the clock reaction below any time to see the same time in your time zone.")
+            except TimeoutError:
+                await interaction.channel.send("Timeout! Try again you slow mortals!")
+
+
 def isTimeFormat(input):
     try:
         time.strptime(input, '%H:%M')
@@ -25,6 +101,19 @@ def isTimeFormat(input):
 class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    class EventRoleView(discord.ui.View):
+        def __init__(self, role):
+            super().__init__()
+            self.role = role
+            self.add_item(RoleButton(role))
+
+    class TimeView(discord.ui.View):
+        def __init__(self, user, bot):
+            super().__init__()
+            self.user = user
+            self.add_item(Timezone1Button(self.user, bot))
+            self.add_item(Timezone2Button(self.user, bot))
 
     #Prints Yeet when our bot's ready 
     @commands.Cog.listener()
@@ -267,82 +356,15 @@ class Utility(commands.Cog):
     async def setTime(self, ctx):
         embedTime = discord.Embed(title= "Time Zone selector", description= "Update your time to be able to convert time from others' times to yours.")
         embedTime.add_field(name = "Hemispheres", value = "1. Eastern Hemisphere\n2. Western Hemisphere")
-        message = await ctx.send(embed= embedTime)
-
-        await message.add_reaction("1️⃣")
-        await message.add_reaction("2️⃣")
-
-        def check(reaction, user):
-            return user == ctx.author and str(reaction.emoji) in ["1️⃣", "2️⃣"]
-
-        while True:
-            #We wait for a reaction from the user
-            reaction, user = await self.bot.wait_for("reaction_add", timeout=3000, check=check)
-
-            if str(reaction.emoji) == "1️⃣":
-                embedTime.clear_fields()
-                embedTime.add_field(name="Time Zones", value= "1. GMT+00:30\n2. GMT+01:00\n3. GMT+01:30\n4. GMT+02:00\n5. GMT+02:30\n6. GMT+03:00\n7. GMT+03:30\n8. GMT+04:00\n9. GMT+04:30\n10. GMT+05:00\n11. GMT+05:30\n12. GMT+06:00\n13. GMT+06:30\n14. GMT+07:00\n15. GMT+07:30\n16. GMT+08:00\n17. GMT+08:30\n18. GMT+09:00\n19. GMT+09:30\n20. GMT+10:00\n21. GMT+10:30\n22. GMT+11:00\n23. GMT+11:30\n24. GMT+12:00")
-                await message.clear_reactions()
-                embedTime.set_footer(text = "Send the number next to your timezone")
-                await message.edit(embed=embedTime)
-
-                def check2(message):
-                    return message.author.id == ctx.author.id and int(message.content) in list(range(1, 24))
-
-                message = await self.bot.wait_for('message', check= check2, timeout=60)
-                try:
-                    data2 = self.bot.col.find_one({"_id": "Times"})
-                    if data2 is None:
-                        data2 = {"_id": "Times", str(ctx.author.id) : EastTimeDict[message.content]}
-                        self.bot.col.insert(data2)
-                    elif str(ctx.author.id) in data2:
-                        data2[str(ctx.author.id)] = EastTimeDict[message.content]
-                        self.bot.col.find_and_modify({"_id": "Times"},data2)
-                    else:
-                        data2[str(ctx.author.id)] = EastTimeDict[message.content]
-                        self.bot.col.find_and_modify({"_id": "Times"}, data2)
-                    await ctx.send("Time Zone updated successfully!! Click the clock reaction below any time to see the same time in your time zone.")
-                except asyncio.TimeoutError:
-                    await ctx.send("Timeout! Try again you slow mortals!")
-
-            elif str(reaction.emoji) == "2️⃣":
-                embedTime.clear_fields()
-                embedTime.add_field(name="Time Zones", value= "1. GMT-00:30\n2. GMT-01:00\n3. GMT-01:30\n4. GMT-02:00\n5. GMT-02:30\n6. GMT-03:00\n7. GMT-03:30\n8. GMT-04:00\n9. GMT-04:30\n10. GMT-05:00\n11. GMT-05:30\n12. GMT-06:00\n13. GMT-06:30\n14. GMT-07:00\n15. GMT-07:30\n16. GMT-08:00\n17. GMT-08:30\n18. GMT-09:00\n19. GMT-09:30\n20. GMT-10:00\n21. GMT-10:30\n22. GMT-11:00\n23. GMT-11:30\n24. GMT-00:00")
-                await message.clear_reactions()
-                embedTime.set_footer(text = "Send the number next to your timezone")
-                await message.edit(embed=embedTime)
-
-                def check3(message):
-                    return message.author.id == ctx.author.id and int(message.content) in list(range(1, 24))
-
-                message = await self.bot.wait_for('message', check= check3, timeout=60)
-                try:
-                    data2 = self.bot.col.find_one({"_id": "Times"})
-                    if data2 is None:
-                        data2 = {"_id": "Times", str(ctx.author.id): WestTimeDict[message.content]}
-                        self.bot.col.insert(data2)
-                    elif str(ctx.author.id) in data2:
-                        data2[str(ctx.author.id)] = WestTimeDict[message.content]
-                        self.bot.col.find_and_modify({"_id": "Times"}, data2)
-                    else:
-                        data2[str(ctx.author.id)] = WestTimeDict[message.content]
-                        self.bot.col.find_and_modify({"_id": "Times"}, data2)
-                    await ctx.send("Time Zone updated successfully!! Click the clock reaction below any time to see the same time in your time zone.")
-                except TimeoutError:
-                    await ctx.send("Timeout! Try again you slow mortals!")
+        await ctx.send(embed= embedTime, view= self.TimeView(ctx.author, self.bot))
 
     @commands.command(
         description = "Adds a new role to the guild to be used for a specific time period."
     )
     @commands.has_permissions(manage_roles = True)
     async def event(self, ctx, *, rolename):
-        try:
-            role = await ctx.guild.create_role(name= rolename, mentionable = True)
-        except discord.HTTPException as e:
-            await ctx.send("Failed at role creation")
-            print (e)
-        message = await ctx.send(f"Role {role.mention} has been created for an event! Make sure to react to this message with a ✅ to get the event role!")
-        await message.add_reaction(emoji = "✅")
+        role = await ctx.guild.create_role(name= rolename, mentionable = True)
+        await ctx.send(f"Role {role.mention} has been created for an event! Make sure to click on 'Get Role' to get the event role!", view= self.EventRoleView(role))
         data = self.bot.col.find_one({"_id": "server_configs"})
         if "Events" in data[str(ctx.guild.id)]:
             data[str(ctx.guild.id)]["Events"].append(rolename)
@@ -350,14 +372,6 @@ class Utility(commands.Cog):
             data[str(ctx.guild.id)]["Events"] = [rolename]
         self.bot.col.find_and_modify({"_id": "server_configs"}, data)
 
-        def checkf(reaction, user):
-            return str(reaction.emoji) == "✅" and not(user.bot)
-        while True:
-            reaction, user = await self.bot.wait_for("reaction_add", check = checkf)
-
-            await user.add_roles(role)
-            await message.remove_reaction(reaction, user)
-    
     @event.error
     async def eventError(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):

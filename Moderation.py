@@ -1,10 +1,6 @@
-from discord.errors import Forbidden, HTTPException
 import discord
 from discord.ext import commands
 from discord.ext import tasks
-import json
-
-from discord.ext.commands.core import command
 
 def Update(cpage, cdict, tpage):
     key = cdict.keys()
@@ -13,6 +9,34 @@ def Update(cpage, cdict, tpage):
     for user in cdict[cpagekey]:
         updEmbed.add_field(name=f"Case {list(cdict[cpagekey].keys()).index(user) + 1}", value= f"<@{int(user)}>: {cdict[cpagekey][user]}")
     return updEmbed
+
+class ForwardButton(discord.ui.Button):
+    def __init__(self, currentpage, c, totalpages):
+        super().__init__(style= discord.ButtonStyle.blurple, label= "Forward", row= 0)
+        self.currentpage = currentpage
+        self.c = c
+        self.totalpages = totalpages
+
+    async def callback(self, interaction : discord.Interaction):
+        if self.currentpage != self.totalpages:
+            self.currentpage +=1
+            await interaction.response.edit_message(embed = Update(self.currentpage, self.c, self.totalpages))
+            for component in self.view.children:
+                component.currentpage = self.currentpage
+
+class BackwardButton(discord.ui.Button):
+    def __init__(self, currentpage, c, totalpages):
+        super().__init__(style=discord.ButtonStyle.blurple, label= "Backward", row = 0)
+        self.currentpage = currentpage
+        self.c = c
+        self.totalpages = totalpages
+
+    async def callback(self, interaction : discord.Interaction):
+        if self.currentpage > 1:
+            self.currentpage -=1
+            await interaction.response.edit_message(embed = Update(self.currentpage, self.c, self.totalpages))
+            for component in self.view.children:
+                component.currentpage = self.currentpage
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
@@ -23,6 +47,15 @@ class Moderation(commands.Cog):
     async def clean_spam(seconds = 15):
         with open("spam_detect.txt", "w+") as file:
             file.truncate(0)
+
+    class helpView(discord.ui.View):
+        def __init__(self, currentpage, c, totalpages):
+            super().__init__()
+            self.currentpage = currentpage
+            self.c = c
+            self.totalpages = totalpages
+            self.add_item(BackwardButton(self.currentpage, self.c, self.totalpages))
+            self.add_item(ForwardButton(self.currentpage, self.c, self.totalpages))
 
     #This listener detects spam in the channels except those marked for spam
     @commands.Cog.listener()
@@ -500,33 +533,33 @@ class Moderation(commands.Cog):
         else:
             totalPages = 2
             currentPage = 1
-            message = await ctx.send(embed= Update(currentPage, Warns, totalPages))
+            message = await ctx.send(embed= Update(currentPage, Warns, totalPages), view = self.helpView(currentPage, Warns, totalPages))
 
-            #Here we control the page configuration by adding emotes for reaction that can be detected by bot to change the page.
-            await message.add_reaction("◀️")
-            await message.add_reaction("▶️")
-
-            #This is the check function, which is passed to ensure the user is the same as the one who asked for help, and the reaction is among the emojis specified
-            def check(reaction, user):
-                return user == ctx.author and str(reaction.emoji) in ["◀️", "▶️"]
-
-            while True:
-                #We wait for a reaction from the user
-                reaction, user = await self.bot.wait_for("reaction_add", timeout=3000, check=check)
-
-                #Check if the emoji is the forward one and current page is not the last, we go onto the next page
-                if str(reaction.emoji) == "▶️" and currentPage != totalPages:
-                    currentPage += 1
-                    await message.edit(embed= Update(currentPage, Warns, totalPages))
-                    await message.remove_reaction(reaction, user)
-                #Check if the emoji is the backward one and current page is not the first, we go onto the previous page
-                elif str(reaction.emoji) == "◀️" and currentPage > 1:
-                    currentPage -= 1
-                    await message.edit(embed= Update(currentPage, Warns, totalPages))
-                    await message.remove_reaction(reaction, user)
-                #Otherwise
-                else:
-                    await message.remove_reaction(reaction, user)
+#            #Here we control the page configuration by adding emotes for reaction that can be detected by bot to change the page.
+#            await message.add_reaction("◀️")
+#            await message.add_reaction("▶️")
+#
+#            #This is the check function, which is passed to ensure the user is the same as the one who asked for help, and the reaction is among the emojis specified
+#            def check(reaction, user):
+#                return user == ctx.author and str(reaction.emoji) in ["◀️", "▶️"]
+#
+#            while True:
+#                #We wait for a reaction from the user
+#                reaction, user = await self.bot.wait_for("reaction_add", timeout=3000, check=check)
+#
+#                #Check if the emoji is the forward one and current page is not the last, we go onto the next page
+#                if str(reaction.emoji) == "▶️" and currentPage != totalPages:
+#                    currentPage += 1
+#                    await message.edit(embed= Update(currentPage, Warns, totalPages))
+#                    await message.remove_reaction(reaction, user)
+#                #Check if the emoji is the backward one and current page is not the first, we go onto the previous page
+#                elif str(reaction.emoji) == "◀️" and currentPage > 1:
+#                    currentPage -= 1
+#                    await message.edit(embed= Update(currentPage, Warns, totalPages))
+#                    await message.remove_reaction(reaction, user)
+#                #Otherwise
+#                else:
+#                    await message.remove_reaction(reaction, user)
 
     #Now a command to add to the moderation of certain special words
     @commands.command(
