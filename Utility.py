@@ -1,13 +1,13 @@
 import discord
 from discord import ui
-from discord.enums import ButtonStyle
-from discord.errors import DiscordServerError
-from discord.ext import commands, tasks
+from discord import ButtonStyle
+from discord.ext import commands
 import datetime as Dt
 import time
 import json
 import pymongo
 import asyncio
+
 
 QOTDPingDict = {1:734436945689706519, 2:305403872438910977, 3:384331120755474442, 4: 698218252119179365, 5:762010102059237397, 6: 690967030299361310, 7:802770234292436992}
 T3PingDict = {1:734436945689706519, 2: 745907752844394537, 3:384331120755474442, 4:698218252119179365, 5:305403872438910977, 6:690967030299361310, 7:802770234292436992}
@@ -48,10 +48,10 @@ class Timezone1Button(discord.ui.Button):
                     self.bot.col.insert(data2)
                 elif str(interaction.user.id) in data2:
                     data2[str(interaction.user.id)] = EastTimeDict[message.content]
-                    self.bot.col.find_and_modify({"_id": "Times"},data2)
+                    self.bot.col.find_one_and_update({"_id": "Times"},{"$set":data2})
                 else:
                     data2[str(interaction.user.id)] = EastTimeDict[message.content]
-                    self.bot.col.find_and_modify({"_id": "Times"}, data2)
+                    self.bot.col.find_one_and_update({"_id": "Times"}, {"$set":data2})
                 await interaction.channel.send("Time Zone updated successfully!! Click the clock reaction below any time to see the same time in your time zone.")
 
             except asyncio.TimeoutError:
@@ -81,10 +81,10 @@ class Timezone2Button(discord.ui.Button):
                     self.bot.col.insert(data2)
                 elif str(interaction.user.id) in data2:
                     data2[str(interaction.user.id)] = WestTimeDict[message.content]
-                    self.bot.col.find_and_modify({"_id": "Times"}, data2)
+                    self.bot.col.find_one_and_update({"_id": "Times"}, {"$set":data2})
                 else:
                     data2[str(interaction.user.id)] = WestTimeDict[message.content]
-                    self.bot.col.find_and_modify({"_id": "Times"}, data2)
+                    self.bot.col.find_one_and_update({"_id": "Times"}, {"$set":data2})
                 await interaction.channel.send("Time Zone updated successfully!! Click the clock reaction below any time to see the same time in your time zone.")
             except TimeoutError:
                 await interaction.channel.send("Timeout! Try again you slow mortals!")
@@ -128,7 +128,7 @@ class Utility(commands.Cog):
             elif str(server.id) not in dict(data):
                 data2 = data
                 data2[str(server.id)] = "y!"
-                self.bot.col.find_and_modify({"_id": "Prefixes"}, data2)
+                self.bot.col.find_one_and_update({"_id": "Prefixes"}, {"$set":data2})
             
         for server in self.bot.guilds:
             data = self.bot.col.find_one({"_id": "server_configs"})
@@ -138,7 +138,7 @@ class Utility(commands.Cog):
             elif str(server.id) not in data:
                 data2 = data
                 data2[str(server.id)] = {"log": None, "Spam": False, "Autorole": False, "door": None, "Spam Ignore": []}
-                self.bot.col.find_and_modify({"_id": "server_configs"}, data2)
+                self.bot.col.find_one_and_update({"_id": "server_configs"}, {"$set":data2})
 
         for server in self.bot.guilds:
             data = self.bot.col.find_one({"_id": "role_configs"})
@@ -148,7 +148,7 @@ class Utility(commands.Cog):
             elif str(server.id) not in data:
                 data2 = data
                 data2[str(server.id)] = {"Moderator" : None, "Member" : None, "Mute" : None}
-                self.bot.col.find_and_modify({"_id": "server_configs"}, data2)
+                self.bot.col.find_one_and_update({"_id": "server_configs"}, {"$set":data2})
 
         for server in self.bot.guilds:
             data = self.bot.col.find_one({"_id": "warns"})
@@ -158,7 +158,7 @@ class Utility(commands.Cog):
             elif str(server.id) not in data:
                 data2 = data
                 data2[str(server.id)] = {"Warns": {}, "Superwarns": {}}
-                self.bot.col.find_and_modify({"_id": "warns"}, data2)
+                self.bot.col.find_one_and_update({"_id": "warns"}, {"$set":data2})
             
             
     @commands.Cog.listener()
@@ -181,19 +181,19 @@ class Utility(commands.Cog):
 
         prefixes[str(guild.id)] = "y!"
 
-        self.bot.col.find_and_modify({"_id": "Prefixes"}, prefixes)
+        self.bot.col.find_one_and_update({"_id": "Prefixes"}, {"$set":prefixes})
 
         
         config = self.bot.col.find_one({"_id": "server_configs"})
 
         config[str(guild.id)] = {"log":None,"Spam": False, "Autorole": False, "door": None, "Spam Ignore": []}
 
-        self.bot.col.find_and_modify({"_id": "server_configs"}, config)
+        self.bot.col.find_one_and_update({"_id": "server_configs"}, {"$set":config})
 
         roles = self.bot.col.find_one({"_id": "role_configs"})
         roles[str(guild.id)] = {"Moderator": None, "Member": None, "Mute": None}
 
-        self.bot.col.find_and_modify({"_id": "role_configs"}, roles)
+        self.bot.col.find_one_and_update({"_id": "role_configs"}, {"$set":roles})
 
         warns = {}
         with open("warns.json", "r") as f:
@@ -300,28 +300,28 @@ class Utility(commands.Cog):
             pass
         
 
-    @commands.command(description = "Pings the person whose QOTD it is, after all, world's pretty much full of forgetful dumbasses.", aliases = ["pingQOTD"])
+    @commands.hybrid_command(description = "Pings the person whose QOTD it is, after all, world's pretty much full of forgetful dumbasses.", aliases = ["pingQOTD"])
     async def qotd(self, ctx):
         if ctx.guild.id == 828926478661320744:
             await ctx.send(f"Today it is the turn of <@{QOTDPingDict[Dt.datetime.today().isoweekday()]}>. Ask your question before I have to use my tasers.")
         else:
             await ctx.send("Don't mind this command it's just for a special server I'm in. Have a nice day.")
 
-    @commands.command(description = "Pings the person whose Top 3 it is. I swear humans forget so much, how do they even have more romantic partners than us bots?", aliases = ["pingT3", "top3", "t3"])
-    async def t3Ping(self, ctx):
+    @commands.hybrid_command(description = "Pings the person whose Top 3 it is.", aliases = ["pingT3", "top3", "t3"])
+    async def t3ping(self, ctx):
         if ctx.guild.id == 828926478661320744:
             await ctx.send(f"Today it is the turn of <@{T3PingDict[Dt.datetime.today().isoweekday()]}>. Send in your Top 3 or I'll ping Satan to banish your soul to the lowest pits of hell.")
         else:
             await ctx.send("Don't mind this command it's just for a special server I'm in. Have a nice day.")
 
-    @commands.command(description = "Changes the prefix incase muscle memory makes you miss the right keys.", aliases = ["setprefix"])
+    @commands.hybrid_command(description = "Changes the prefix incase muscle memory makes you miss the right keys.", aliases = ["setprefix"])
     @commands.has_permissions(administrator = True)
     async def changeprefix(self, ctx, prefix):
         prefixes = self.bot.col.find_one({"_id": "Prefixes"})
 
         prefixes[str(ctx.guild.id)] = prefix
 
-        self.bot.col.find_and_modify({"_id": "Prefixes"}, prefixes)
+        self.bot.col.find_one_and_update({"_id": "Prefixes"}, {"$set":prefixes})
         
         await ctx.send(f"I will now be summoned with the prefix {prefix}.")
 
@@ -352,13 +352,13 @@ class Utility(commands.Cog):
 #        except asyncio.TimeoutError:
 #            await ctx.send("Timeout. Restart the setup to finish the reaction role.")
 
-    @commands.command(description = "Sets your timezones to convert times.", aliases = ["setzone"])
-    async def setTime(self, ctx):
+    @commands.hybrid_command(description = "Sets your timezones to convert times.", aliases = ["setzone"])
+    async def settime(self, ctx):
         embedTime = discord.Embed(title= "Time Zone selector", description= "Update your time to be able to convert time from others' times to yours.")
         embedTime.add_field(name = "Hemispheres", value = "1. Eastern Hemisphere\n2. Western Hemisphere")
         await ctx.send(embed= embedTime, view= self.TimeView(ctx.author, self.bot))
 
-    @commands.command(
+    @commands.hybrid_command(
         description = "Adds a new role to the guild to be used for a specific time period."
     )
     @commands.has_permissions(manage_roles = True)
@@ -370,14 +370,14 @@ class Utility(commands.Cog):
             data[str(ctx.guild.id)]["Events"].append(rolename)
         else:
             data[str(ctx.guild.id)]["Events"] = [rolename]
-        self.bot.col.find_and_modify({"_id": "server_configs"}, data)
+        self.bot.col.find_one_and_update({"_id": "server_configs"}, {"$set":data})
 
     @event.error
     async def eventError(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You don't have the authority of event manager to manage events! Be careful or next time you don't get to participate in the event at all.")
 
-    @commands.command(
+    @commands.hybrid_command(
         description= "A command to end the already running events in the Server."
     )
     @commands.has_permissions(manage_roles = True)
@@ -387,7 +387,7 @@ class Utility(commands.Cog):
             await role.delete()
             data = self.bot.col.find_one({"_id": "server_configs"})
             data[str(ctx.guild.id)]["Events"].remove(rolename)
-            self.bot.col.find_and_modify({"_id": "server_configs"}, data)
+            self.bot.col.find_one_and_update({"_id": "server_configs"}, {"$set":data})
             await ctx.send(f"Event {rolename} has now ended! The role will no longer be in use.")
         else:
             await ctx.send("This event wasn't found! Check again to see if it is the same event.")
@@ -397,5 +397,5 @@ class Utility(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("Only Event Managers can handle time when an event stays! Do not interfere!")
 
-def setup(bot):
-    bot.add_cog(Utility(bot))
+async def setup(bot):
+    await bot.add_cog(Utility(bot))

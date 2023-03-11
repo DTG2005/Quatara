@@ -90,7 +90,7 @@ class Moderation(commands.Cog):
                     await message.channel.send(f"You are spamming. Proceeding to ping <@&{id}> to take action.")
 
     #This is the kick command, pretty self explanatory imo
-    @commands.command(description = "Kicks members, supa simple lil command all of ya folks should know right?", aliases = ["yeet"])
+    @commands.hybrid_command(description = "Kicks members, supa simple lil command all of ya folks should know right?", aliases = ["yeet"])
     @commands.has_permissions(kick_members = True)
     async def kick(self, ctx, member: discord.Member, *, reason = "No reason provided"):
         await member.kick(reason= reason)
@@ -114,7 +114,7 @@ class Moderation(commands.Cog):
             print(error)
 
     #Repeat the same thing for ban command
-    @commands.command(description = "Bans pesky motherlovers from the server once and for all for greater good of the server.", aliases = ["superyeet"])
+    @commands.hybrid_command(description = "Bans pesky motherlovers from the server once and for all for greater good of the server.", aliases = ["superyeet"])
     @commands.has_permissions(ban_members = True)
     async def ban(self, ctx, member : discord.Member, *, reason = "No reason provided."):
         await ctx.guild.ban(member, reason= reason)
@@ -136,13 +136,13 @@ class Moderation(commands.Cog):
             await ctx.send("Hey mods! We have an imposter tryna ban someone without thy permissions. Do with him as thou wisheth.")
 
     #Unban command to not indulge in the manual hassle of unbanning
-    @commands.command(
-        description = "Unbans reformed exiles who have redeemed themselves. Do remember, don't hesitate to ban again if you must.",
+    @commands.hybrid_command(
+        description = "Unbans reformed exiles who have redeemed themselves. Do remember, don't hesitate to ban again.",
         aliases = ["unyeet"]
     )
     @commands.has_permissions(ban_members = True)
-    async def unban(self, ctx, memberID, reason):
-        member = await self.bot.fetch_user(memberID)
+    async def unban(self, ctx, memberid, reason):
+        member = await self.bot.fetch_user(memberid)
         await ctx.guild.unban(member, reason= reason)
         await ctx.send(f"Member Unbanned!!!! All hail {ctx.guild.name}")
 
@@ -152,7 +152,7 @@ class Moderation(commands.Cog):
             await ctx.send("You do not have the supreme power to unyeet the yeeted! Begone before I yeet you as well.")
 
     #repeat the same thing for clean command as well so yep
-    @commands.command(description = "Clears the given set of commands so you don't have to dirty your hands.", aliases = ["clean", "tidy", "purge"])
+    @commands.hybrid_command(description = "Clears the given set of commands so you don't have to dirty your hands.", aliases = ["clean", "tidy", "purge"])
     @commands.has_permissions(manage_messages = True)
     async def clear(self, ctx, amt):
         await ctx.channel.purge(limit = int(amt) + 1)
@@ -162,7 +162,7 @@ class Moderation(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("Sorry but it seems you do not have the permissions to use this command. Thanks with the goodwill for cleannup though! :thumbsup:.")
 
-    @commands.command(description = "Voids the pestilence into your void! After all, there's no sound in space.", aliases = ["void"])
+    @commands.hybrid_command(description = "Voids the pestilence into your void! After all, there's no sound in space.", aliases = ["void"])
     @commands.has_permissions(kick_members = True)
     async def mute(self, ctx, user : discord.Member, *, reason= "No reason provided."):
         role = None
@@ -191,7 +191,7 @@ class Moderation(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You tried to mute someone but can't! Hah! Why shut others' mouths when you can't zip it up yourself?")
 
-    @commands.command(description = "Gives the disabled peasants their ability to talk back. There should be a reward for bad boys when they turn good, right?", aliases = ["unvoid"])
+    @commands.hybrid_command(description = "Gives the disabled peasants their ability to talk back.", aliases = ["unvoid"])
     @commands.has_permissions(kick_members = True)
     async def unmute(self, ctx, user : discord.Member, *, reason= "No reason provided."):
         role = None
@@ -222,7 +222,7 @@ class Moderation(commands.Cog):
             await ctx.send("You tried to unmute someone but can't! Hah! You shouldn't try to be a god by giving other their speech back, mortal.")
 
     #A warm command to give members warnings before voiding them :kekw:
-    @commands.command(description = "Warns members that might commit wrongdoings. I mean you have to be merciful since our Satan isn't. [Note: A reason is compulsory for using this command.")
+    @commands.hybrid_command(description = "Warns members that might commit wrongdoings. [Note: A reason is compulsory for using this command.]")
     @commands.has_permissions(kick_members = True)
     async def warn(self, ctx, user : discord.Member, *, reason):
         #Check if the user has warns from the file
@@ -253,7 +253,7 @@ class Moderation(commands.Cog):
                 else:
                     await ctx.send("Cannot warn further, muted role has not been set up. What kind of moderation do you think I'd do if you don't give me the roles, dummy.")
                 data[str(ctx.guild.id)]["Warns"] = warns
-                self.bot.col.find_and_modify({"_id": "warns"}, data)
+                self.bot.col.find_one_and_update({"_id": "warns"}, {"$set":data})
             else:
                 warnnum = warns[str(user.id)]
                 warnnum += 1
@@ -261,7 +261,7 @@ class Moderation(commands.Cog):
                 warns[str(user.id)] = warnnum
                 data[str(ctx.guild.id)]["Warns"] = warns
                 await ctx.send(f"{user.name} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = 1.")
-                self.bot.col.find_and_modify({"_id": "warns"}, data)
+                self.bot.col.find_one_and_update({"_id": "warns"}, {"$set":data})
                 config = self.bot.col.find_one({"_id": "server_configs"})
                 try:
                     commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
@@ -275,7 +275,7 @@ class Moderation(commands.Cog):
             await ctx.send(f"{user.mention} has been warned for {reason}. Behave yourself or I'm getting the spaceship. Warnings remaining = 2.")
             warns[str(user.id)] = 1
             data[str(ctx.guild.id)]["Warns"] = warns
-            self.bot.col.find_and_modify({"_id": "warns"}, data)
+            self.bot.col.find_one_and_update({"_id": "warns"}, data)
             config = self.bot.col.find_one({"_id": "server_configs"})
             try:
                 commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
@@ -293,7 +293,7 @@ class Moderation(commands.Cog):
             await ctx.send("You can't even handle your own habit of stealing the job of Mods, why try to warn others?")
 
     #A superwarn commands for more serious stuff
-    @commands.command(description = "Warns pestilence for more serious stuff. These get YEETed instantly on 3 warns instead of being muted")
+    @commands.hybrid_command(description = "Warns pestilence for more serious stuff. These get YEETed instantly on 3 superwarns.")
     @commands.has_permissions(kick_members = True)
     async def superwarn(self, ctx, user : discord.Member, *, reason):
         superwarns = {}
@@ -307,7 +307,7 @@ class Moderation(commands.Cog):
                     await user.send(f"Thou hast been kicked, pestilence, after 3 superwarnings. The reason for thy last warning was {reason}.")
                     superwarns.pop(str(user.id))
                     data[str(ctx.guild.id)]["Superwarns"] = superwarns
-                    self.bot.col.find_and_modify({"_id": "warns"}, data)
+                    self.bot.col.find_one_and_update({"_id": "warns"}, {"$set":data})
                     config = self.bot.col.find_one({"_id": "server_configs"})
                     try:
                         commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
@@ -320,12 +320,12 @@ class Moderation(commands.Cog):
                     superwarns[str(user.id)] += 1
                     data[str(ctx.guild.id)]["Superwarns"] = superwarns
                     await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = 1.")
-                    self.bot.col.find_and_modify({"_id": "warns"}, data)
+                    self.bot.col.find_one_and_update({"_id": "warns"}, {"$set":data})
             else:
                 superwarns[str(user.id)] = 1
                 data[str(ctx.guild.id)]["Superwarns"] = superwarns
                 await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = 2.")
-                self.bot.col.find_and_modify({"_id": "warns"}, data)
+                self.bot.col.find_one_and_update({"_id": "warns"}, {"$set":data})
                 config = self.bot.col.find_one({"_id": "server_configs"})
                 try:
                     commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
@@ -338,7 +338,7 @@ class Moderation(commands.Cog):
             superwarns[str(user.id)] = 1
             data[str(ctx.guild.id)]["Superwarns"] = superwarns
             await ctx.send(f"{user.name} has been superwarned for {reason}. Behave yourself or face the wrath of Quatara!! Superwarnings remaining = 2.")
-            self.bot.col.find_and_modify({"_id": "warns"}, data)
+            self.bot.col.find_one_and_update({"_id": "warns"}, {"$set":data})
             config = self.bot.col.find_one({"_id": "server_configs"})
             try:
                 commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
@@ -354,7 +354,7 @@ class Moderation(commands.Cog):
             await ctx.send("You tried to superwarn without permissions. Satan surely has a separate role reserved for you in hell.")
 
     #A forgive command in case someone did a lot of good work and you are like, okay let's pardon this guy's warnings
-    @commands.command(description = "Clears the warnings from a redeemed soul. Good work, boi!")
+    @commands.hybrid_command(description = "Clears the warnings from a redeemed soul. Good work, boi!")
     @commands.has_permissions(kick_members = True)
     async def forgive(self, ctx, user : discord.Member):
         data = self.bot.col.find_one({"_id": "warns"})
@@ -366,7 +366,7 @@ class Moderation(commands.Cog):
             await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
             data[str(ctx.guild.id)]["Warns"] = warns
             data[str(ctx.guild.id)]["Superwarns"] = superwarns
-            self.bot.col.find_and_modify({"_id": "warns"}, data)
+            self.bot.col.find_one_and_update({"_id": "warns"}, {"$set":data})
             config = self.bot.col.find_one({"_id": "server_configs"})
             try:
                 commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
@@ -379,7 +379,7 @@ class Moderation(commands.Cog):
             warns.pop(str(user.id))
             await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
             data[str(ctx.guild.id)]["Warns"] = warns
-            self.bot.col.find_and_modify({"_id": "warns"}, data)
+            self.bot.col.find_one_and_update({"_id": "warns"}, {"$set":data})
             config = self.bot.col.find_one({"_id": "server_configs"})
             try:
                 commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
@@ -392,7 +392,7 @@ class Moderation(commands.Cog):
             superwarns.pop(str(user.id))
             await ctx.send(f"{user.name}, you have been forgiven for your good deeds from the sins of your pasts. You live as a free man now. Just remember: Try not to repeat the mistakes you made. Have a good day.")
             data[str(ctx.guild.id)]["Superwarns"]
-            self.bot.col.find_and_modify({"_id": "warns"}, data)
+            self.bot.col.find_one_and_update({"_id": "warns"}, {"$set":data})
             config = self.bot.col.find_one({"_id": "server_configs"})
             try:
                 commandlog = self.bot.get_channel(config[str(ctx.guild.id)]["Command Log"])
@@ -410,7 +410,7 @@ class Moderation(commands.Cog):
             await ctx.send("You can't forgive when you don't have the power to. So don't try to act smart, it's scummy. And sus.")
 
     #A command to add spam channels.
-    @commands.command(description = "Adds spam channels where spamming is allowed.")
+    @commands.hybrid_command(description = "Adds spam channels where spamming is allowed.")
     @commands.has_permissions(administrator = True)
     async def addspam(self, ctx, channel : discord.TextChannel):
         spam_channels = []
@@ -420,7 +420,7 @@ class Moderation(commands.Cog):
             await ctx.send("This channel already exists in our spam list.")
         else:
             data[str(ctx.guild.id)]["Spam Ignore"].append(channel.id)
-            self.bot.col.find_and_modify({"_id": "server_configs"}, data)
+            self.bot.col.find_one_and_update({"_id": "server_configs"}, {"$set":data})
             
             await ctx.send(f"Spam channel has been added to our list. We shall  not ping the moderators on spams in {channel.name} from now on.")
 
@@ -430,7 +430,7 @@ class Moderation(commands.Cog):
             await ctx.send("You do not decide which channels I do not detect spam in! Begone thot!")
 
     #Aaaaaand another command to remove them
-    @commands.command(description = "Removes a channel from spam channels where spamming is allowed.")
+    @commands.hybrid_command(description = "Removes a channel from spam channels where spamming is allowed.")
     @commands.has_permissions(administrator = True)
     async def rmspam(self, ctx, channel : discord.TextChannel):
         spam_channels =  []
@@ -438,7 +438,7 @@ class Moderation(commands.Cog):
         spam_channels = data[str(ctx.guild.id)]["Spam Ignore"]
         if channel.id in spam_channels:
             data[str(ctx.guild.id)]["Spam Ignore"].remove(channel.id)
-            self.bot.col.find_and_modify({"_id": "server_configs"}, data)
+            self.bot.col.find_one_and_update({"_id": "server_configs"}, {"$set":data})
             await ctx.send("Spam channel removed!!!")
         else:
             await ctx.send("The channel isn't in the list of channels where spamming is allowed. Look again, maybe?")
@@ -449,13 +449,13 @@ class Moderation(commands.Cog):
             await ctx.send("You do not decide which channels I detect spam in! Begone thot!")
 
     #Flips the spam on or off
-    @commands.command(description = "Toggles the spam to on or off on your server. Gotta keep spammers at bay!")
+    @commands.hybrid_command(description = "Toggles the spam to on or off on your server. Gotta keep spammers at bay!")
     @commands.has_permissions(administrator = True)
     async def togglespam(self, ctx):
         data = dict(self.bot.col.find_one({"_id": "server_configs"}))
         data[str(ctx.guild.id)]["Spam"] = not(data[str(ctx.guild.id)]["Spam"])
         truth = data[str(ctx.guild.id)]["Spam"]
-        self.bot.col.find_and_modify({"_id": "server_configs"}, data)
+        self.bot.col.find_one_and_update({"_id": "server_configs"}, {"$set":data})
         await ctx.send(f"Spam detection has been set to {truth} on your server.")
     
     @togglespam.error
@@ -464,55 +464,55 @@ class Moderation(commands.Cog):
         await ctx.send("You do not have the authorisation to decide to toggle the spam for this server! Next time, consult your superiors.")
 
     #Sets the Moderator role to be pinged when Spam occurs on your server
-    @commands.command(description = "Sets the role to be mentioned when spam is detected on your server to start the spicy drama.")
+    @commands.hybrid_command(description = "Sets the role to be mentioned when spam is detected on your server to start the spicy drama.")
     @commands.has_permissions(administrator = True)
-    async def setMod(self, ctx, role : discord.Role):
+    async def setmod(self, ctx, role : discord.Role):
         data = dict(self.bot.col.find_one({"_id": "role_configs"}))
         data[str(ctx.guild.id)]["Moderator"] = role.id
-        self.bot.col.find_and_modify({"_id": "role_configs"}, data)
+        self.bot.col.find_one_and_update({"_id": "role_configs"}, {"$set":data})
         await ctx.send(f"Moderator role is now set to {role.mention}. This role will now be pinged when spam is detected.")
 
-    @setMod.error
+    @setmod.error
     async def sMerror(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("Begone mortal! You cannot set the moderator role for this server! Have an admin try to use the command!")
 
-    @commands.command(description = "Sets the Member role which is to logged to members when they join and removed when they are muted.")
+    @commands.hybrid_command(description = "Sets the Member role which is to logged to members when they join and removed when they are muted.")
     @commands.has_permissions(kick_members = True)
-    async def setMember(self, ctx, role : discord.Role):
+    async def setmember(self, ctx, role : discord.Role):
         data = {}
         data = dict(self.bot.col.find_one({"_id": "role_configs"}))
         data[str(ctx.guild.id)]["Member"] = role.id
-        self.bot.col.find_and_modify({"_id": "role_configs"}, data)
+        self.bot.col.find_one_and_update({"_id": "role_configs"}, {"$set":data})
         await ctx.send(f"The Member role is now set to {role.mention}. This role will now be given to members when they join the server and will be taken away when muted.")
 
-    @setMember.error
+    @setmember.error
     async def sMembError(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You cannot set the member role when your own role in the server is negligible. Begone!")
 
-    @commands.command(description = "Sets the mute role to be given to members whence they are muted. Have to make a specification of disability to cause it, after all.")
+    @commands.hybrid_command(description = "Sets the mute role to be given to members whence they are muted.")
     @commands.has_permissions(kick_members = True)
-    async def setMute(self, ctx, role : discord.Role):
+    async def setmute(self, ctx, role : discord.Role):
         data = {}
         data = dict(self.bot.col.find_one({"_id": "role_configs"}))
         data[str(ctx.guild.id)]["Mute"] = role.id
-        self.bot.col.find_and_modify({"_id": "role_configs"}, data)
+        self.bot.col.find_one_and_update({"_id": "role_configs"}, {"$set":data})
         await ctx.send(f"The Muted role is now set to {role.mention}. This role will now be given to members when they are muted in replacement of the general Member role.")
 
-    @setMute.error
+    @setmute.error
     async def setMuteError(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You cannot set the muted role when your own role in the server is negligible. Begone!")
 
     #Flips the spam on or off
-    @commands.command(description = "Toggles the autorole to on or off on your server. Autorole on gives the new joining members the Member role automatically.")
+    @commands.hybrid_command(description = "Toggles the autorole to on or off on your server. Autorole automatically assigns member role.")
     @commands.has_permissions(administrator = True)
     async def toggleautorole(self, ctx):
         data = dict(self.bot.col.find_one({"_id": "server_configs"}))
         data[str(ctx.guild.id)]["Autorole"] = not(data[str(ctx.guild.id)]["Autorole"])
         truth = data[str(ctx.guild.id)]["Spam"]
-        self.bot.col.find_and_modify({"_id": "server_configs"}, data)
+        self.bot.col.find_one_and_update({"_id": "server_configs"}, {"$set":data})
         await ctx.send(f"Autoroles has been set to {truth} on your server.")
     
     @toggleautorole.error
@@ -521,8 +521,8 @@ class Moderation(commands.Cog):
         await ctx.send("You are not authorised to decide who gets what role. Begone!")
 
     #A display command to display the Warnings and Superwarnings in the server
-    @commands.command(
-        description = "A command which enables you to view the warns and superwarns of the members in your server. A quick peek is always cool, y'know.",
+    @commands.hybrid_command(
+        description = "A command which enables you to view the warns and superwarns of the members in your server.",
         aliases = ["viewwarns", "warns"]
     )
     async def displaywarns(self, ctx):
@@ -562,10 +562,10 @@ class Moderation(commands.Cog):
 #                    await message.remove_reaction(reaction, user)
 
     #Now a command to add to the moderation of certain special words
-    @commands.command(
+    @commands.hybrid_command(
         description = "Adds new keywords to moderate. You don't want those dum dums to spoil the kids after all, do you?",
     )
-    async def addWord(self, ctx, *, word):
+    async def addword(self, ctx, *, word):
         dic = self.bot.col.find_one({"_id": "server_configs"})
         if "Words" not in dic[str(ctx.guild.id)]:
             words = [word]
@@ -579,7 +579,7 @@ class Moderation(commands.Cog):
                 words.append(word)
                 await ctx.send("The word has now been registered!!! We shall now ping the moderators whenever said word or phrase is detected in chat. ")
                 dic[str(ctx.guild.id)]["Words"] = words
-        self.bot.col.find_and_modify({"_id": "server_configs"}, dic)
+        self.bot.col.find_one_and_update({"_id": "server_configs"}, {"$set":dic})
         try:
             commandlog = self.bot.get_channel(dic[str(ctx.guild.id)]["Command Log"])
             embed = discord.Embed(title= "Word Remove case administered", description= f"<@{ctx.author.id}> has added ||{word}|| to moderated words!!")
@@ -589,10 +589,10 @@ class Moderation(commands.Cog):
             pass
 
     #And now a command to remove said words.
-    @commands.command(
+    @commands.hybrid_command(
         description = "Adds new keywords to moderate. You don't want those dum dums to spoil the kids after all, do you?",
     )
-    async def rmWord(self, ctx, *, word):
+    async def rmword(self, ctx, *, word):
         dic = self.bot.col.find_one({"_id": "server_configs"})
         if "Words" not in dic[str(ctx.guild.id)]:
             await ctx.send("Word not found in our record. Mind checking it again?")
@@ -604,7 +604,7 @@ class Moderation(commands.Cog):
                 dic[str(ctx.guild.id)]["Words"] = words
             else:
                 await ctx.send("Word not found in our record. Mind checking it again?")
-        self.bot.col.find_and_modify({"_id": "server_configs"}, dic)
+        self.bot.col.find_one_and_update({"_id": "server_configs"}, {"$set":dic})
         try:
             commandlog = self.bot.get_channel(dic[str(ctx.guild.id)]["Command Log"])
             embed = discord.Embed(title= "Word Remove case administered", description= f"<@{ctx.author.id}> has added ||{word}|| to moderated words!!")
@@ -613,5 +613,5 @@ class Moderation(commands.Cog):
         except:
             pass
                 
-def setup(bot):
-    bot.add_cog(Moderation(bot))
+async def setup(bot):
+    await bot.add_cog(Moderation(bot))

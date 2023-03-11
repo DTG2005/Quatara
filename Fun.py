@@ -1,5 +1,3 @@
-from discord.enums import NotificationLevel
-from discord.colour import Color
 from os import name
 import discord
 import asyncio
@@ -46,8 +44,8 @@ class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(
-        description = "Gives a prediction for a future event! It is said that my predictions come true if your reality coexists with your mental framework.",
+    @commands.hybrid_command(
+        description = "Gives a prediction for a future event! Yes they are always true. *sighs*",
         aliases = ["8ball", "soothsay"]
     )
     async def predict(self, ctx, *, question):
@@ -60,8 +58,8 @@ class Fun(commands.Cog):
         Sendembed.add_field(name= f"Question: {question}", value = f"Answer: {answer}")
         await ctx.send(embed= Sendembed)
 
-    @commands.command(
-        description = "Rolls a dice that is too nice. Give a number to roll out of a total of it, or skip the number to roll from a default of six",
+    @commands.hybrid_command(
+        description = "Rolls a dice. Give a number to roll a total of it, or skip the number to roll a default of six",
         aliases = ["dice", "die"]
     )
     async def roll(self, ctx, number : int = 6):
@@ -70,7 +68,7 @@ class Fun(commands.Cog):
         embed1.set_author(name= ctx.author.name, icon_url= ctx.author.avatar.url)
         await ctx.send(embed= embed1)
 
-    @commands.command(
+    @commands.hybrid_command(
         description = "Predicts an answer from a given number of options. After all it's not always in binary.",
         aliases = ["multiple", "multipredict"]
     )
@@ -101,8 +99,8 @@ class Fun(commands.Cog):
             embed1.add_field(name= f"Option {options.index(value) + 1}", value=value)
         await ctx.send(embed=embed1)
 
-    @commands.command(
-        description = "Makes someone a professional retard. I mean, they already are, just gotta expose their dumbassery, after all.",
+    @commands.hybrid_command(
+        description = "Makes someone a professional retard. I mean, they already are, just gotta expose their dumbassery.",
         aliases = ["dumb"]
     )
     async def retard(self, ctx, member : discord.Member = None):
@@ -110,7 +108,7 @@ class Fun(commands.Cog):
             member = ctx.author
         
         retard = Image.open("Images/retard.jpg")
-        asset = member.avatar.url_as(size = 128)
+        asset = member.avatar.with_size(128)
         data = BytesIO(await asset.read())
 
         pfp = Image.open(data)
@@ -121,17 +119,19 @@ class Fun(commands.Cog):
         retard.save("Images/Profiles/profile.jpg")
         await ctx.send(file = discord.File("Images/Profiles/profile.jpg"))
 
-    @commands.command(
+    @commands.hybrid_command(
         description = "Yeets a disgrace off into the void. YEEEEEEEEEEEEEEEEEEET!!!",
         aliases = ["YEEEET"]
     )
     async def yeetimg(self, ctx, user: discord.Member):
+        asset = None
         try:
-            asset = user.avatar.url_as(size = 128)
-        except:
+            asset = user.avatar.with_size(128)
+        except Exception as e:
+            await ctx.send(e)
             await ctx.send("I need a second person to yeet, dummy. Try again cautiously or I'll yeet you.")
         data = BytesIO(await asset.read())
-        asset2 = ctx.author.avatar.url_as(size = 128)
+        asset2 = ctx.author.avatar.with_size(128)
         data2 = BytesIO(await asset2.read())
         pfp2 = Image.open(data2)
 
@@ -147,6 +147,10 @@ class Fun(commands.Cog):
         YEET.save("Images/Profiles/profile2.jpg")
         await ctx.send(file= discord.File("Images/Profiles/profile2.jpg"))
 
+    @commands.hybrid_command()
+    async def hello(self, ctx):
+        await ctx.send("Hey")
+
                 
-def setup(bot):
-    bot.add_cog(Fun(bot))
+async def setup(bot):
+    await bot.add_cog(Fun(bot))

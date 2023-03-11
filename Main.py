@@ -5,13 +5,15 @@ import pymongo
 
 # Here I proceed to read the token
 def readToken():
-    with open("Token", 'r') as File:
+    with open("Token.txt", 'r') as File:
         lines = File.readlines()
         return lines[0].strip()
 
 token = readToken()
 
-intents = discord.Intents.default()
+pymongo.MongoClient()["ajsdkjas"]["laksdjalksjda"].fin
+
+intents = discord.Intents.all()
 intents.members = True
 
 client2 = pymongo.MongoClient("mongodb+srv://Quatara:Dev_is_a_pussy@quatara.ehvj6.mongodb.net/Quatara?retryWrites=true&w=majority")
@@ -33,15 +35,30 @@ class YeetBot (commands.Bot):
         )
         self.db = client2["Quatara"]
         self.col = self.db["Data"]
-        self.load_extension("Misc")
-        self.load_extension("Moderation")
-        self.load_extension("Fun")
-        self.load_extension("Logging")
-        self.load_extension("Utility")
 
         self.version = "v2.2.1"
         self.author = 305403872438910977
 
+Client = YeetBot()
+
+@Client.event
+async def on_ready():
+    print("Da return of da yeeeeet!!!")
+
+    await Client.load_extension("Misc")
+    await Client.load_extension("Moderation")
+    await Client.load_extension("Fun")
+    await Client.load_extension("Logging")
+    await Client.load_extension("Utility")
+
+    await Client.tree.sync()
+
+@Client.command(hidden= True)
+async def reload(ctx, Cog):
+    await Client.reload_extension(Cog)
+    await Client.tree.sync()
+    await ctx.send("Cog reloaded!")
+
 if __name__ == "__main__":
-    YeetBot().run(token)
+    Client.run(token)
     

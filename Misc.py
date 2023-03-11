@@ -1,7 +1,6 @@
 from logging import error
 import discord
 from discord import embeds
-from discord.errors import HTTPException, InteractionResponded
 from discord.ext import commands
 import asyncio
 
@@ -63,7 +62,7 @@ class Misc(commands.Cog):
 
             
 
-    @commands.command(description = "Displays this message, what do you think you're doing, sucker?", aliases = ["assist"], invoke_without_command = True)
+    @commands.hybrid_command(description = "Displays this message, what do you think you're doing, sucker?", aliases = ["assist"], invoke_without_command = True)
     async def help(self,ctx):
 
         currentPage = 1
@@ -78,7 +77,7 @@ class Misc(commands.Cog):
         #So the total pages are equal to the number of cogs, which are the elements in this case
         totalPages = len(c)
         await ctx.send(embed= updateEmbed(currentPage, c, totalPages), view=self.helpView(currentPage, c, totalPages))
-
-def setup(bot):
+    
+async def setup(bot):
     bot.remove_command("help")
-    bot.add_cog(Misc(bot))
+    await bot.add_cog(Misc(bot))

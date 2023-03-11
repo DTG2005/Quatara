@@ -139,40 +139,40 @@ class Logging(commands.Cog):
         await log_channel.send(embed= embed)
 
     #A command for setting the logging channel to be a different one
-    @commands.command(description = "Changes the log channel to be a different one for a more QOL channel to be set separately.")
+    @commands.hybrid_command(description = "Changes the log channel to be a different one for a more QOL channel to be set separately.")
     async def setlog(self, ctx, channel: discord.TextChannel):
         
         config = self.bot.col.find_one({"_id": "server_configs"})
         config[str(ctx.guild.id)]["log"] = channel.id
 
-        self.bot.col.find_and_modify({"_id": "server_configs"}, config)
+        self.bot.col.find_one_and_update({"_id": "server_configs"}, {"$set":config})
 
         await ctx.send("Log channel updated!!!")
 
     #A command for setting the door channel (The channel where the entries and exits are logged) to be a different one
-    @commands.command(description = "Sets the door channel to be a different one, where the member entries and exits are logged.")
+    @commands.hybrid_command(description = "Sets the door channel to be a different one, where the member entries and exits are logged.")
     async def setdoor(self, ctx, channel : discord.TextChannel):
 
         config = self.bot.col.find_one({"_id": "server_configs"})
         config[str(ctx.guild.id)]["door"] = channel.id
 
-        self.bot.col.find_and_modify({"_id": "server_configs"}, config)
+        self.bot.col.find_one_and_update({"_id": "server_configs"}, {"$set":config})
 
         await ctx.send("Door channel updated!!!")
 
     #A command to set a command log
-    @commands.command(
-        description = "A command that lets you set the command logs where I send embeds everytime a moderation command is used.",
+    @commands.hybrid_command(
+        description = "A command that lets you set the command logs to send embeds everytime a moderation command is used.",
     )
     async def setcommandlog(self, ctx, channel : discord.TextChannel):
         config = self.bot.col.find_one({"_id": "server_configs"})
         config[str(ctx.guild.id)]["Command Log"] = channel.id
 
-        self.bot.col.find_and_modify({"_id": "server_configs"}, config)
+        self.bot.col.find_one_and_update({"_id": "server_configs"}, config)
         await ctx.send("Command Logs Updated!!!")
 
     #A command to set a welcome message
-    @commands.command(
+    @commands.hybrid_command(
         description = "Adds a welcome message and channel prompt incase you want the user to get a special welcome message!"
     )
     async def setsocialdoor(self, ctx):
@@ -217,5 +217,5 @@ class Logging(commands.Cog):
             except:
                 await ctx.send("Channel mention not detected. Try again.")
 
-def setup(bot):
-    bot.add_cog(Logging(bot))
+async def setup(bot):
+    await bot.add_cog(Logging(bot))
