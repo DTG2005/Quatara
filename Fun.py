@@ -80,7 +80,7 @@ class Fun(commands.Cog):
         options = []
         while True:
             try:
-                message = await self.bot.wait_for('message', timeout = 60.0, check= check)
+                message = await self.bot.wait_for('message', timeout = 20.0, check= check)
             except asyncio.TimeoutError:
                 await ctx.send("Timeout! Try the prediction again.")
                 break
@@ -146,11 +146,6 @@ class Fun(commands.Cog):
 
         YEET.save("Images/Profiles/profile2.jpg")
         await ctx.send(file= discord.File("Images/Profiles/profile2.jpg"))
-
-    @commands.hybrid_command()
-    async def hello(self, ctx):
-        await ctx.send("Hey")
-
                 
 async def setup(bot):
     await bot.add_cog(Fun(bot))

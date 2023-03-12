@@ -11,8 +11,6 @@ def readToken():
 
 token = readToken()
 
-pymongo.MongoClient()["ajsdkjas"]["laksdjalksjda"].fin
-
 intents = discord.Intents.all()
 intents.members = True
 
@@ -48,8 +46,10 @@ async def on_ready():
     await Client.load_extension("Misc")
     await Client.load_extension("Moderation")
     await Client.load_extension("Fun")
+    await Client.load_extension("Math")
     await Client.load_extension("Logging")
     await Client.load_extension("Utility")
+    await Client.load_extension("Conversions")
 
     await Client.tree.sync()
 
