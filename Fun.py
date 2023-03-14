@@ -100,6 +100,26 @@ class Fun(commands.Cog):
         await ctx.send(embed=embed1)
 
     @commands.hybrid_command(
+        description = "Makes someone gigachad. I mean, they already are, just gotta show it to the world.",
+        aliases = ["op"]
+    )
+    async def chad(self, ctx, member : discord.Member = None):
+        if member == None:
+            member = ctx.author
+        
+        chad = Image.open("Images/Chad.jpg")
+        asset = member.avatar.with_size(128)
+        data = BytesIO(await asset.read())
+
+        pfp = Image.open(data)
+        pfp.resize((165, 165))
+        pfp = crop_to_circle(pfp)
+
+        chad.paste(pfp, (235, 40))
+        chad.save("Images/Profiles/profile.jpg")
+        await ctx.send(file = discord.File("Images/Profiles/profile.jpg"))
+
+    @commands.hybrid_command(
         description = "Yeets a disgrace off into the void. YEEEEEEEEEEEEEEEEEEET!!!",
         aliases = ["YEEEET"]
     )
