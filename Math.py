@@ -95,6 +95,10 @@ class Math(commands.Cog):
     async def sqrt(self, ctx, num: float):
         await ctx.send(math.sqrt(num))
 
+    @commands.hybrid_command(description="Gives you the value of pi, π.")
+    async def pi(self, ctx):
+        await ctx.send(f"π = {math.pi}")
+
     
     async def cog_command_error(self, ctx, error):
         if isinstance(error, ValueError):
