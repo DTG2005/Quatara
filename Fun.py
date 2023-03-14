@@ -100,26 +100,6 @@ class Fun(commands.Cog):
         await ctx.send(embed=embed1)
 
     @commands.hybrid_command(
-        description = "Makes someone a professional retard. I mean, they already are, just gotta expose their dumbassery.",
-        aliases = ["dumb"]
-    )
-    async def retard(self, ctx, member : discord.Member = None):
-        if member == None:
-            member = ctx.author
-        
-        retard = Image.open("Images/retard.jpg")
-        asset = member.avatar.with_size(128)
-        data = BytesIO(await asset.read())
-
-        pfp = Image.open(data)
-        pfp.resize((165, 165))
-        pfp = crop_to_circle(pfp)
-
-        retard.paste(pfp, (67, 11))
-        retard.save("Images/Profiles/profile.jpg")
-        await ctx.send(file = discord.File("Images/Profiles/profile.jpg"))
-
-    @commands.hybrid_command(
         description = "Yeets a disgrace off into the void. YEEEEEEEEEEEEEEEEEEET!!!",
         aliases = ["YEEEET"]
     )
