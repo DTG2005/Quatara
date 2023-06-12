@@ -94,7 +94,7 @@ class Fun(commands.Cog):
                     options.append(message.content)
                     await message.add_reaction("👍")
         answer = random.choice(options)
-        embed1 = discord.Embed(title= "Multiple Choice Prediction", description=f"And the answer is {answer}", color= discord.Color(0x350cf9)) 
+        embed1 = discord.Embed(title= f"Question: {question}", description=f"And the answer is {answer}", color= discord.Color(0x350cf9)) 
         for value in options:
             embed1.add_field(name= f"Option {options.index(value) + 1}", value=value)
         await ctx.send(embed=embed1)
