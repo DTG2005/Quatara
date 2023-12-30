@@ -61,7 +61,10 @@ class Moderation(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         dic = self.bot.col.find_one({"_id": "server_configs"})
-        words = dic[str(message.guild.id)]["Words"]
+        try:
+            words = dic[str(message.guild.id)]["Words"]
+        except:
+            pass
         mod = self.bot.col.find_one({"_id": "role_configs"})[str(message.guild.id)]["Moderator"]
 
         for word in words:
@@ -534,32 +537,6 @@ class Moderation(commands.Cog):
             totalPages = 2
             currentPage = 1
             message = await ctx.send(embed= Update(currentPage, Warns, totalPages), view = self.helpView(currentPage, Warns, totalPages))
-
-#            #Here we control the page configuration by adding emotes for reaction that can be detected by bot to change the page.
-#            await message.add_reaction("◀️")
-#            await message.add_reaction("▶️")
-#
-#            #This is the check function, which is passed to ensure the user is the same as the one who asked for help, and the reaction is among the emojis specified
-#            def check(reaction, user):
-#                return user == ctx.author and str(reaction.emoji) in ["◀️", "▶️"]
-#
-#            while True:
-#                #We wait for a reaction from the user
-#                reaction, user = await self.bot.wait_for("reaction_add", timeout=3000, check=check)
-#
-#                #Check if the emoji is the forward one and current page is not the last, we go onto the next page
-#                if str(reaction.emoji) == "▶️" and currentPage != totalPages:
-#                    currentPage += 1
-#                    await message.edit(embed= Update(currentPage, Warns, totalPages))
-#                    await message.remove_reaction(reaction, user)
-#                #Check if the emoji is the backward one and current page is not the first, we go onto the previous page
-#                elif str(reaction.emoji) == "◀️" and currentPage > 1:
-#                    currentPage -= 1
-#                    await message.edit(embed= Update(currentPage, Warns, totalPages))
-#                    await message.remove_reaction(reaction, user)
-#                #Otherwise
-#                else:
-#                    await message.remove_reaction(reaction, user)
 
     #Now a command to add to the moderation of certain special words
     @commands.hybrid_command(

@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 import json
 import pymongo
+from diffusers import AutoPipelineForText2Image
+import torch
 
 # Here I proceed to read the token
 def readToken():
@@ -31,6 +33,9 @@ class YeetBot (commands.Bot):
             self_bot = False,
             activity = discord.Activity(type=discord.ActivityType.competing, name = "Yolo!!!!!!"),
         )
+        self.pipe = AutoPipelineForText2Image.from_pretrained(
+    "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float32, use_safetensors=True
+)
         self.db = client2["Quatara"]
         self.col = self.db["Data"]
 
@@ -50,6 +55,7 @@ async def on_ready():
     await Client.load_extension("Logging")
     await Client.load_extension("Utility")
     await Client.load_extension("Conversions")
+    await Client.load_extension("ML")
 
     await Client.tree.sync()
 
